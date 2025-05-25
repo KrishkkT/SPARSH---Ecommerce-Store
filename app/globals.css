@@ -1,0 +1,391 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Premium animations and effects with green theme */
+@keyframes shimmer-green {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float-natural {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+
+@keyframes pulse-emerald {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.7);
+  }
+}
+
+@keyframes gradient-shift-green {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes leaf-sway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes organic-flow {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  33% {
+    transform: translateX(30px) translateY(-20px) scale(1.1);
+  }
+  66% {
+    transform: translateX(-20px) translateY(10px) scale(0.9);
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+.animate-shimmer-green {
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-green 2s infinite;
+}
+
+.animate-float-natural {
+  animation: float-natural 4s ease-in-out infinite;
+}
+
+.animate-pulse-emerald {
+  animation: pulse-emerald 3s ease-in-out infinite;
+}
+
+.animate-gradient-green {
+  background-size: 200% 200%;
+  animation: gradient-shift-green 4s ease infinite;
+}
+
+.animate-leaf-sway {
+  animation: leaf-sway 3s ease-in-out infinite;
+}
+
+.animate-organic-flow {
+  animation: organic-flow 8s ease-in-out infinite;
+}
+
+/* Glass morphism effects with green tints */
+.glass-card-green {
+  background: rgba(236, 253, 245, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.15);
+}
+
+.glass-header-green {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(25px);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+/* Premium gradient backgrounds with green theme */
+.premium-gradient-green {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 25%, #dcfce7 50%, #bbf7d0 75%, #86efac 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-green 10s ease infinite;
+}
+
+.luxury-gradient-green {
+  background: linear-gradient(45deg, #10b981, #34d399, #f59e0b, #fbbf24);
+  background-size: 300% 300%;
+  animation: gradient-shift-green 8s ease infinite;
+}
+
+.nature-gradient {
+  background: linear-gradient(135deg, #065f46, #047857, #059669, #10b981, #34d399);
+  background-size: 300% 300%;
+  animation: gradient-shift-green 12s ease infinite;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar with green theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(236, 253, 245, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #10b981, #34d399);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #047857, #10b981);
+}
+
+/* Enhanced button hover effects with green theme */
+.btn-premium-green {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-premium-green::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
+  transition: left 0.6s;
+}
+
+.btn-premium-green:hover::before {
+  left: 100%;
+}
+
+.btn-premium-green:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+}
+
+/* Card hover effects with natural theme */
+.card-premium-green {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.card-premium-green:hover {
+  transform: translateY(-12px) rotateX(3deg);
+  box-shadow: 0 25px 50px rgba(16, 185, 129, 0.15);
+}
+
+/* Text gradient animations with green theme */
+.text-gradient-animate-green {
+  background: linear-gradient(45deg, #065f46, #047857, #10b981, #34d399, #6ee7b7, #065f46);
+  background-size: 300% 300%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift-green 5s ease infinite;
+}
+
+/* Loading spinner with green theme */
+.spinner-green {
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 50%;
+  border-top: 2px solid #10b981;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Organic shapes and patterns */
+.organic-blob {
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  animation: organic-flow 10s ease-in-out infinite;
+}
+
+.leaf-pattern::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(52, 211, 153, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Responsive design enhancements */
+@media (max-width: 768px) {
+  .glass-card-green {
+    backdrop-filter: blur(15px);
+  }
+
+  .premium-gradient-green {
+    background-size: 300% 300%;
+  }
+
+  .card-premium-green:hover {
+    transform: translateY(-8px) rotateX(2deg);
+  }
+}
+
+/* Focus states for accessibility with green theme */
+.focus-premium-green:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5);
+}
+
+/* Enhanced transitions */
+.transition-premium-green {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Backdrop blur support */
+@supports (backdrop-filter: blur(20px)) {
+  .glass-modern-green {
+    backdrop-filter: blur(20px);
+  }
+}
+
+@supports not (backdrop-filter: blur(20px)) {
+  .glass-modern-green {
+    background: rgba(236, 253, 245, 0.9);
+  }
+}
+
+/* Natural texture effects */
+.texture-natural {
+  background-image: radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+}
+
+/* Hover glow effects */
+.glow-emerald:hover {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Particle effects */
+.particles::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(2px 2px at 20px 30px, rgba(16, 185, 129, 0.3), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(52, 211, 153, 0.3), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(34, 197, 94, 0.3), transparent);
+  background-repeat: repeat;
+  background-size: 100px 100px;
+  animation: organic-flow 15s linear infinite;
+  pointer-events: none;
+}
+
+/* Premium shadows with green tints */
+.shadow-emerald-soft {
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.1);
+}
+
+.shadow-emerald-medium {
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15);
+}
+
+.shadow-emerald-strong {
+  box-shadow: 0 15px 40px rgba(16, 185, 129, 0.2);
+}
+
+/* Interactive elements */
+.interactive-green {
+  transition: all 0.3s ease;
+}
+
+.interactive-green:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.interactive-green:active {
+  transform: scale(0.98);
+}
