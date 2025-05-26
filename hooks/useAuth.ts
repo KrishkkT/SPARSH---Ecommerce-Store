@@ -38,84 +38,133 @@ export function useAuth() {
   }, [])
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName || null,
+    try {
+      console.log("Attempting signup for:", email)
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName || null,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-      },
-    })
+      })
 
-    if (error) throw error
-
-    // Create profile
-    if (data.user) {
-      try {
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          email: data.user.email!,
-          full_name: fullName || null,
-        })
-      } catch (profileError) {
-        console.warn("Profile creation failed:", profileError)
+      if (error) {
+        console.error("Signup error:", error)
+        throw error
       }
-    }
 
-    return data
+      console.log("Signup successful:", data)
+
+      // Create profile if user was created
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log("User created, email confirmation required")
+        // Don't create profile yet, wait for email confirmation
+      } else if (data.user) {
+        console.log("Creating user profile...")
+        try {
+          await supabase.from("profiles").insert({
+            id: data.user.id,
+            email: data.user.email!,
+            full_name: fullName || null,
+          })
+          console.log("Profile created successfully")
+        } catch (profileError) {
+          console.warn("Profile creation failed:", profileError)
+          // Don't throw error for profile creation failure
+        }
+      }
+
+      return data
+    } catch (error: any) {
+      console.error("Signup process error:", error)
+      throw error
+    }
   }
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      console.log("Attempting signin for:", email)
 
-    if (error) throw error
-    return data
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        console.error("Signin error:", error)
+        throw error
+      }
+
+      console.log("Signin successful")
+      return data
+    } catch (error: any) {
+      console.error("Signin process error:", error)
+      throw error
+    }
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      console.log("Signout successful")
+    } catch (error: any) {
+      console.error("Signout error:", error)
+      throw error
+    }
   }
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      if (error) throw error
+      console.log("Password reset email sent")
+    } catch (error: any) {
+      console.error("Password reset error:", error)
+      throw error
+    }
   }
 
-  const updateProfile = async (updates: {
-    full_name?: string
-    phone?: string
-    address?: string
-  }) => {
+  const updateProfile = async (updates: { full_name?: string; phone?: string; address?: string }) => {
     if (!user) throw new Error("No user logged in")
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id)
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
+        .select()
+        .single()
 
-    if (error) throw error
-    return data
+      if (error) throw error
+      return data
+    } catch (error: any) {
+      console.error("Profile update error:", error)
+      throw error
+    }
   }
 
   const getProfile = async () => {
     if (!user) throw new Error("No user logged in")
 
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+    try {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
-    if (error) throw error
-    return data
+      if (error) throw error
+      return data
+    } catch (error: any) {
+      console.error("Get profile error:", error)
+      throw error
+    }
   }
 
   return {

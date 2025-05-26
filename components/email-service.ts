@@ -1,27 +1,61 @@
 export class EmailService {
-  private static async sendEmailRequest(emailData: any) {
-    try {
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailData),
-      })
+  private static async sendEmailRequest(emailData: any, retries = 3) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`EmailService: Attempt ${attempt} for ${emailData.type}:`, {
+          to: emailData.to ? `${emailData.to.substring(0, 5)}...` : "missing",
+          subject: emailData.subject,
+          type: emailData.type,
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to send email")
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailData),
+        })
+
+        console.log(`EmailService: API response status: ${response.status}`)
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error(`EmailService: API error response:`, errorText)
+
+          let errorData
+          try {
+            errorData = JSON.parse(errorText)
+          } catch {
+            errorData = { error: errorText }
+          }
+
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const result = await response.json()
+        console.log(`EmailService: Success for ${emailData.type}:`, result)
+        return { success: true, result }
+      } catch (error: any) {
+        console.error(`EmailService: Attempt ${attempt} failed for ${emailData.type}:`, error.message)
+
+        if (attempt === retries) {
+          console.error(`EmailService: All attempts failed for ${emailData.type}`)
+          return { success: false, error: error.message }
+        }
+
+        // Wait before retry with exponential backoff
+        const delay = 1000 * Math.pow(2, attempt - 1)
+        console.log(`EmailService: Waiting ${delay}ms before retry...`)
+        await new Promise((resolve) => setTimeout(resolve, delay))
       }
-
-      return { success: true }
-    } catch (error: any) {
-      console.error("Email service error:", error)
-      return { success: false, error: error.message }
     }
+
+    return { success: false, error: "Failed after all retries" }
   }
 
   static async sendOrderConfirmation(orderDetails: any) {
+    console.log("EmailService: Sending order confirmation...")
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -30,19 +64,21 @@ export class EmailService {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Order Confirmation - SPARSH</title>
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #10b981; }
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .order-item { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #10b981; }
           .total { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
+          .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
+          .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>🌿 Order Confirmation</h1>
+            <div class="logo">🌿 SPARSH</div>
+            <h1>Order Confirmation</h1>
             <p>Thank you for choosing SPARSH Natural Hair Care!</p>
           </div>
           <div class="content">
@@ -52,6 +88,7 @@ export class EmailService {
             <h3>📦 Order Information</h3>
             <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
             <p><strong>Order Date:</strong> ${new Date(orderDetails.order_date).toLocaleDateString()}</p>
+            <p><strong>Payment Method:</strong> ${orderDetails.payment_method}</p>
             
             <h3>📋 Items Ordered</h3>
             ${orderDetails.order_items
@@ -82,6 +119,7 @@ export class EmailService {
           <div class="footer">
             <p>Thank you for choosing SPARSH Natural Hair Care!</p>
             <p>Transform your hair naturally 🌿</p>
+            <p><small>This email was sent automatically. Please do not reply to this email.</small></p>
           </div>
         </div>
       </body>
@@ -96,284 +134,11 @@ export class EmailService {
     })
   }
 
-  static async sendOrderCancellation(orderDetails: any) {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order Cancelled - SPARSH</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #dc2626; }
-          .total { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>❌ Order Cancelled</h1>
-            <p>Your order has been successfully cancelled</p>
-          </div>
-          <div class="content">
-            <h2>Hello ${orderDetails.customer_name},</h2>
-            <p>We've successfully cancelled your order as requested. Here are the details:</p>
-            
-            <h3>📦 Cancelled Order Information</h3>
-            <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
-            <p><strong>Original Order Date:</strong> ${new Date(orderDetails.order_date).toLocaleDateString()}</p>
-            <p><strong>Cancellation Date:</strong> ${new Date().toLocaleDateString()}</p>
-            
-            <h3>📋 Cancelled Items</h3>
-            ${orderDetails.order_items
-              .map(
-                (item: any) => `
-              <div class="order-item">
-                <strong>${item.product_name}</strong><br>
-                Quantity: ${item.quantity} × ₹${item.product_price.toLocaleString()}<br>
-                <strong>Subtotal: ₹${item.subtotal.toLocaleString()}</strong>
-              </div>
-            `,
-              )
-              .join("")}
-            
-            <div class="total">
-              <h3>💰 Cancelled Amount: ₹${orderDetails.total_amount.toLocaleString()}</h3>
-            </div>
-            
-            <h3>💳 Refund Information</h3>
-            <p>If you made a payment, your refund will be processed within 5-7 business days to your original payment method.</p>
-            
-            <h3>📞 Need Help?</h3>
-            <p>If you have any questions, please contact us:</p>
-            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-            <p>📞 Phone: +91 9409073136</p>
-          </div>
-          <div class="footer">
-            <p>We hope to serve you again soon!</p>
-            <p>SPARSH Natural Hair Care 🌿</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    return this.sendEmailRequest({
-      to: orderDetails.customer_email,
-      subject: `Order Cancelled #${orderDetails.order_id.slice(0, 8)} - SPARSH Natural Hair Care`,
-      html,
-      type: "order_cancellation",
-    })
-  }
-
-  static async sendOrderModification(orderDetails: any) {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order Modified - SPARSH</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
-          .total { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🔄 Order Modified</h1>
-            <p>Your order has been successfully updated</p>
-          </div>
-          <div class="content">
-            <h2>Hello ${orderDetails.customer_name}!</h2>
-            <p>We've successfully updated your order as requested. Here are the new details:</p>
-            
-            <h3>📦 Updated Order Information</h3>
-            <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
-            <p><strong>Original Order Date:</strong> ${new Date(orderDetails.order_date).toLocaleDateString()}</p>
-            <p><strong>Modification Date:</strong> ${new Date().toLocaleDateString()}</p>
-            
-            <h3>📋 Updated Items</h3>
-            ${orderDetails.order_items
-              .map(
-                (item: any) => `
-              <div class="order-item">
-                <strong>${item.product_name}</strong><br>
-                Quantity: ${item.quantity} × ₹${item.product_price.toLocaleString()}<br>
-                <strong>Subtotal: ₹${item.subtotal.toLocaleString()}</strong>
-              </div>
-            `,
-              )
-              .join("")}
-            
-            <div class="total">
-              <h3>💰 New Total Amount: ₹${orderDetails.total_amount.toLocaleString()}</h3>
-            </div>
-            
-            <h3>🚚 Shipping Information</h3>
-            <p><strong>Delivery Address:</strong><br>${orderDetails.shipping_address}</p>
-            <p><strong>Phone:</strong> ${orderDetails.customer_phone}</p>
-            
-            <h3>📞 Need Help?</h3>
-            <p>If you have any questions about your updated order, please contact us:</p>
-            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-            <p>📞 Phone: +91 9409073136</p>
-          </div>
-          <div class="footer">
-            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
-            <p>Transform your hair naturally 🌿</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    return this.sendEmailRequest({
-      to: orderDetails.customer_email,
-      subject: `Order Modified #${orderDetails.order_id.slice(0, 8)} - SPARSH Natural Hair Care`,
-      html,
-      type: "order_modification",
-    })
-  }
-
-  static async sendPasswordResetNotification(userDetails: any) {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Reset - SPARSH</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🔑 Password Reset Request</h1>
-            <p>SPARSH Natural Hair Care</p>
-          </div>
-          <div class="content">
-            <h2>Password Reset Requested</h2>
-            <p>We received a request to reset the password for your SPARSH account:</p>
-            
-            <p><strong>Email:</strong> ${userDetails.email}</p>
-            <p><strong>Request Time:</strong> ${new Date().toLocaleString()}</p>
-            
-            <div class="warning">
-              <h3>⚠️ Security Notice</h3>
-              <p>If you didn't request this password reset, please ignore this email or contact us immediately.</p>
-            </div>
-            
-            <h3>📞 Need Help?</h3>
-            <p>If you have any questions or concerns, please contact us:</p>
-            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-            <p>📞 Phone: +91 9409073136</p>
-          </div>
-          <div class="footer">
-            <p>SPARSH Natural Hair Care - Transform your hair naturally 🌿</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    return this.sendEmailRequest({
-      to: userDetails.email,
-      subject: "Password Reset Request - SPARSH Natural Hair Care",
-      html,
-      type: "password_reset",
-    })
-  }
-
-  static async sendAccountUpdateNotification(userDetails: any, updateType: string) {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Account Updated - SPARSH</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .info-box { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #10b981; }
-          .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>✏️ Account Updated</h1>
-            <p>Your account information has been updated</p>
-          </div>
-          <div class="content">
-            <h2>Hello ${userDetails.full_name || "Valued Customer"}!</h2>
-            <p>Your SPARSH account information has been successfully updated.</p>
-            
-            <h3>📋 Update Details</h3>
-            <div class="info-box">
-              <p><strong>Update Type:</strong> ${updateType}</p>
-              <p><strong>Update Time:</strong> ${new Date().toLocaleString()}</p>
-            </div>
-            
-            <h3>👤 Current Account Information</h3>
-            <div class="info-box">
-              <p><strong>Name:</strong> ${userDetails.full_name || "Not provided"}</p>
-              <p><strong>Email:</strong> ${userDetails.email}</p>
-              <p><strong>Phone:</strong> ${userDetails.phone || "Not provided"}</p>
-              <p><strong>Address:</strong> ${userDetails.address || "Not provided"}</p>
-            </div>
-            
-            <div class="warning">
-              <h3>⚠️ Security Notice</h3>
-              <p>If you didn't make these changes, please contact us immediately at rs.sparshnaturals@gmail.com</p>
-            </div>
-            
-            <h3>📞 Need Help?</h3>
-            <p>If you have any questions, please contact us:</p>
-            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-            <p>📞 Phone: +91 9409073136</p>
-          </div>
-          <div class="footer">
-            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
-            <p>Transform your hair naturally 🌿</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    return this.sendEmailRequest({
-      to: userDetails.email,
-      subject: "Account Updated - SPARSH Natural Hair Care",
-      html,
-      type: "account_update",
-    })
-  }
-
   static async sendContactMessage(contactDetails: any) {
-    const html = `
+    console.log("EmailService: Sending contact message...")
+
+    // Send to business email
+    const businessEmailHtml = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -381,12 +146,13 @@ export class EmailService {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>New Contact Message - SPARSH</title>
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .message-box { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #8b5cf6; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .message-box { background: #f9f9f9; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #8b5cf6; }
+          .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
+          .urgent { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 15px 0; }
         </style>
       </head>
       <body>
@@ -396,197 +162,114 @@ export class EmailService {
             <p>SPARSH Natural Hair Care</p>
           </div>
           <div class="content">
-            <h2>New Customer Inquiry</h2>
-            <p>You have received a new message from a customer:</p>
+            <div class="urgent">
+              <strong>⚠️ New Customer Inquiry - Please Respond Within 24 Hours</strong>
+            </div>
             
-            <h3>👤 Contact Details</h3>
+            <h2>Customer Contact Details</h2>
             <div class="message-box">
               <p><strong>Name:</strong> ${contactDetails.name}</p>
               <p><strong>Email:</strong> ${contactDetails.email}</p>
               <p><strong>Message Time:</strong> ${new Date().toLocaleString()}</p>
             </div>
             
-            <h3>💬 Message</h3>
+            <h3>💬 Customer Message</h3>
             <div class="message-box">
               <p>${contactDetails.message}</p>
             </div>
             
-            <p><strong>Please respond to this inquiry promptly to maintain excellent customer service.</strong></p>
+            <p><strong>Action Required:</strong> Please respond to this inquiry promptly to maintain excellent customer service.</p>
           </div>
           <div class="footer">
             <p>SPARSH Natural Hair Care - Customer Service Team</p>
+            <p><small>This is an automated notification from your website contact form.</small></p>
           </div>
         </div>
       </body>
       </html>
     `
 
-    // Send to business email
-    return this.sendEmailRequest({
-      to: "rs.sparshnaturals@gmail.com",
-      subject: `New Contact Message from ${contactDetails.name} - SPARSH`,
-      html,
-      type: "contact_message",
-    })
-  }
-
-  static async sendShipmentUpdate(orderDetails: any, trackingInfo: any) {
-    const html = `
+    // Send confirmation to customer
+    const customerEmailHtml = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order Shipped - SPARSH</title>
+        <title>Message Received - SPARSH</title>
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .tracking-box { background: #8b5cf6; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-          .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #8b5cf6; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .message-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; margin: 15px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>🚚 Your Order is on the Way!</h1>
+            <h1>✅ Message Received</h1>
             <p>SPARSH Natural Hair Care</p>
           </div>
           <div class="content">
-            <h2>Hello ${orderDetails.customer_name}!</h2>
-            <p>Great news! Your order has been shipped and is on its way to you.</p>
+            <h2>Hello ${contactDetails.name}!</h2>
+            <p>Thank you for contacting SPARSH Natural Hair Care. We have received your message and will respond within 24 hours.</p>
             
-            <div class="tracking-box">
-              <h3>📦 Tracking Information</h3>
-              <p><strong>Tracking Number:</strong> ${trackingInfo.tracking_number}</p>
-              <p><strong>Carrier:</strong> ${trackingInfo.carrier}</p>
-              <p><strong>Estimated Delivery:</strong> ${trackingInfo.estimated_delivery}</p>
+            <h3>Your Message:</h3>
+            <div class="message-box">
+              ${contactDetails.message}
             </div>
             
-            <h3>📦 Order Details</h3>
-            <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
-            <p><strong>Ship Date:</strong> ${new Date().toLocaleDateString()}</p>
-            
-            <h3>📋 Shipped Items</h3>
-            ${orderDetails.order_items
-              .map(
-                (item: any) => `
-              <div class="order-item">
-                <strong>${item.product_name}</strong><br>
-                Quantity: ${item.quantity}
-              </div>
-            `,
-              )
-              .join("")}
-            
-            <h3>🏠 Shipping Address</h3>
-            <p>${orderDetails.shipping_address}</p>
-            
-            <h3>📞 Need Help?</h3>
-            <p>If you have any questions about your shipment, please contact us:</p>
-            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-            <p>📞 Phone: +91 9409073136</p>
-          </div>
-          <div class="footer">
-            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
-            <p>Transform your hair naturally 🌿</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    return this.sendEmailRequest({
-      to: orderDetails.customer_email,
-      subject: `Order Shipped #${orderDetails.order_id.slice(0, 8)} - SPARSH Natural Hair Care`,
-      html,
-      type: "shipment_update",
-    })
-  }
-
-  static async sendDeliveryConfirmation(orderDetails: any) {
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Order Delivered - SPARSH</title>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #059669, #047857); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .success-box { background: #059669; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-          .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #059669; }
-          .footer { text-align: center; margin-top: 30px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>✅ Order Delivered!</h1>
-            <p>Your SPARSH products have arrived</p>
-          </div>
-          <div class="content">
-            <h2>Hello ${orderDetails.customer_name}!</h2>
-            <p>Wonderful! Your order has been successfully delivered. We hope you love your new hair care products!</p>
-            
-            <div class="success-box">
-              <h3>🎉 Delivery Confirmed</h3>
-              <p><strong>Delivered on:</strong> ${new Date().toLocaleDateString()}</p>
-              <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
-            </div>
-            
-            <h3>📋 Delivered Items</h3>
-            ${orderDetails.order_items
-              .map(
-                (item: any) => `
-              <div class="order-item">
-                <strong>${item.product_name}</strong><br>
-                Quantity: ${item.quantity}
-              </div>
-            `,
-              )
-              .join("")}
-            
-            <h3>💡 Hair Care Tips</h3>
-            <p>To get the best results from your SPARSH products:</p>
+            <p><strong>What happens next?</strong></p>
             <ul>
-              <li>Follow the usage instructions on each product</li>
-              <li>Be consistent with your hair care routine</li>
-              <li>Give products 2-4 weeks to show visible results</li>
-              <li>Store products in a cool, dry place</li>
+              <li>Our team will review your message</li>
+              <li>We'll respond within 24 hours</li>
+              <li>For urgent matters, call us at +91 9409073136</li>
             </ul>
             
-            <h3>⭐ Share Your Experience</h3>
-            <p>We'd love to hear about your experience! Please consider leaving a review or sharing your hair transformation journey with us.</p>
-            
-            <h3>📞 Need Help?</h3>
-            <p>If you have any questions about your products or need hair care advice:</p>
-            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-            <p>📞 Phone: +91 9409073136</p>
+            <p>Thank you for your interest in our natural hair care products!</p>
           </div>
           <div class="footer">
             <p>Thank you for choosing SPARSH Natural Hair Care!</p>
             <p>Transform your hair naturally 🌿</p>
+            <p><small>This is an automated confirmation. Please do not reply to this email.</small></p>
           </div>
         </div>
       </body>
       </html>
     `
 
-    return this.sendEmailRequest({
-      to: orderDetails.customer_email,
-      subject: `Order Delivered #${orderDetails.order_id.slice(0, 8)} - SPARSH Natural Hair Care`,
-      html,
-      type: "delivery_confirmation",
+    // Send both emails
+    const businessResult = await this.sendEmailRequest({
+      to: "rs.sparshnaturals@gmail.com",
+      subject: `🚨 New Contact Message from ${contactDetails.name} - SPARSH`,
+      html: businessEmailHtml,
+      type: "contact_message_business",
     })
+
+    const customerResult = await this.sendEmailRequest({
+      to: contactDetails.email,
+      subject: "Message Received - SPARSH Natural Hair Care",
+      html: customerEmailHtml,
+      type: "contact_message_customer",
+    })
+
+    console.log("EmailService: Contact message results:", {
+      business: businessResult.success,
+      customer: customerResult.success,
+    })
+
+    return {
+      success: businessResult.success && customerResult.success,
+      businessEmail: businessResult,
+      customerEmail: customerResult,
+    }
   }
 
   static async sendAdminOrderNotification(orderDetails: any) {
+    console.log("EmailService: Sending admin order notification...")
+
     const html = `
     <!DOCTYPE html>
     <html>
@@ -595,14 +278,15 @@ export class EmailService {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>New Order Received - SPARSH</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 30px; text-align: center; }
+        .content { padding: 30px; }
+        .order-item { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         .total { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-        .payment-info { background: #10b981; color: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
-        .footer { text-align: center; margin-top: 30px; color: #666; }
+        .payment-info { background: #10b981; color: white; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; }
+        .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
+        .urgent { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 15px 0; }
       </style>
     </head>
     <body>
@@ -612,6 +296,10 @@ export class EmailService {
           <p>SPARSH Natural Hair Care - Admin Notification</p>
         </div>
         <div class="content">
+          <div class="urgent">
+            <strong>🚨 Action Required: New order needs processing</strong>
+          </div>
+          
           <h2>Order Details</h2>
           
           <h3>📦 Order Information</h3>
@@ -622,6 +310,7 @@ export class EmailService {
           
           <div class="payment-info">
             <h3>💳 Payment Status: COMPLETED ✅</h3>
+            <p>Payment has been verified and processed successfully</p>
           </div>
           
           <h3>👤 Customer Information</h3>
@@ -648,16 +337,18 @@ export class EmailService {
           </div>
           
           <h3>📋 Next Steps</h3>
-          <ul>
-            <li>Process the order for shipment</li>
+          <ol>
+            <li><strong>Process the order for shipment</strong></li>
             <li>Update inventory if needed</li>
             <li>Prepare shipping labels</li>
             <li>Send shipment notification to customer</li>
-          </ul>
+            <li>Update order status in admin panel</li>
+          </ol>
         </div>
         <div class="footer">
           <p>SPARSH Natural Hair Care - Admin Panel</p>
           <p>Transform your hair naturally 🌿</p>
+          <p><small>This is an automated notification from your e-commerce system.</small></p>
         </div>
       </div>
     </body>
@@ -666,7 +357,7 @@ export class EmailService {
 
     return this.sendEmailRequest({
       to: "rs.sparshnaturals@gmail.com",
-      subject: `New Order #${orderDetails.order_id.slice(0, 8)} - ₹${orderDetails.total_amount.toLocaleString()} - SPARSH`,
+      subject: `🚨 New Order #${orderDetails.order_id.slice(0, 8)} - ₹${orderDetails.total_amount.toLocaleString()} - SPARSH`,
       html,
       type: "admin_order_notification",
     })

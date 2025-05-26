@@ -1,22 +1,30 @@
 import crypto from "crypto"
 
-// Validate environment variables
-if (!process.env.RAZORPAY_KEY_ID) {
+// Environment variables validation with better error messages
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET
+
+if (!RAZORPAY_KEY_ID) {
+  console.error("RAZORPAY_KEY_ID environment variable is missing")
   throw new Error("RAZORPAY_KEY_ID environment variable is not set")
 }
 
-if (!process.env.RAZORPAY_KEY_SECRET) {
+if (!RAZORPAY_KEY_SECRET) {
+  console.error("RAZORPAY_KEY_SECRET environment variable is missing")
   throw new Error("RAZORPAY_KEY_SECRET environment variable is not set")
 }
 
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID!
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET!
 const RAZORPAY_BASE_URL = "https://api.razorpay.com/v1"
 
 // Create Basic Auth header
 const getAuthHeader = () => {
-  const credentials = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")
-  return `Basic ${credentials}`
+  try {
+    const credentials = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")
+    return `Basic ${credentials}`
+  } catch (error) {
+    console.error("Error creating auth header:", error)
+    throw new Error("Failed to create authentication header")
+  }
 }
 
 // Razorpay order creation options
@@ -48,6 +56,7 @@ export const createRazorpayOrder = async (options: RazorpayOrderOptions) => {
       currency: options.currency,
       receipt: options.receipt,
       notes: options.notes,
+      keyId: RAZORPAY_KEY_ID ? `${RAZORPAY_KEY_ID.substring(0, 8)}...` : "missing",
     })
 
     const orderData = {
@@ -58,19 +67,35 @@ export const createRazorpayOrder = async (options: RazorpayOrderOptions) => {
       payment_capture: 1, // Auto capture
     }
 
-    // Make API call to Razorpay
+    // Make API call to Razorpay with timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
     const response = await fetch(`${RAZORPAY_BASE_URL}/orders`, {
       method: "POST",
       headers: {
         Authorization: getAuthHeader(),
         "Content-Type": "application/json",
+        "User-Agent": "SPARSH-Ecommerce/1.0",
       },
       body: JSON.stringify(orderData),
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
+
+    console.log("Razorpay API response status:", response.status)
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error("Razorpay API error:", response.status, errorData)
+      const errorText = await response.text()
+      console.error("Razorpay API error response:", errorText)
+
+      let errorData
+      try {
+        errorData = JSON.parse(errorText)
+      } catch {
+        errorData = { error: { description: errorText } }
+      }
 
       throw new Error(
         `Razorpay API Error (${response.status}): ${
@@ -80,6 +105,7 @@ export const createRazorpayOrder = async (options: RazorpayOrderOptions) => {
     }
 
     const order = await response.json()
+    console.log("Razorpay order response:", { id: order.id, status: order.status, amount: order.amount })
 
     if (!order || !order.id) {
       throw new Error("Invalid order response from Razorpay")
@@ -90,7 +116,14 @@ export const createRazorpayOrder = async (options: RazorpayOrderOptions) => {
   } catch (error: any) {
     console.error("Razorpay order creation error:", error)
 
-    // Handle network errors
+    // Handle specific error types
+    if (error.name === "AbortError") {
+      return {
+        success: false,
+        error: "Request timeout: Razorpay API took too long to respond",
+      }
+    }
+
     if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED") {
       return {
         success: false,
@@ -131,180 +164,53 @@ export const verifyRazorpaySignature = (
   }
 }
 
-// Fetch payment details
-export const fetchPaymentDetails = async (paymentId: string) => {
-  try {
-    const response = await fetch(`${RAZORPAY_BASE_URL}/payments/${paymentId}`, {
-      method: "GET",
-      headers: {
-        Authorization: getAuthHeader(),
-        "Content-Type": "application/json",
-      },
-    })
+// Fetch payment details with retry logic
+export const fetchPaymentDetails = async (paymentId: string, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(
-        `Razorpay API Error (${response.status}): ${
-          errorData.error?.description || errorData.message || response.statusText
-        }`,
-      )
-    }
+      const response = await fetch(`${RAZORPAY_BASE_URL}/payments/${paymentId}`, {
+        method: "GET",
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+          "User-Agent": "SPARSH-Ecommerce/1.0",
+        },
+        signal: controller.signal,
+      })
 
-    const payment = await response.json()
-    return { success: true, payment }
-  } catch (error: any) {
-    console.error("Fetch payment details error:", error)
-    return {
-      success: false,
-      error: error.message || "Failed to fetch payment details",
-    }
-  }
-}
+      clearTimeout(timeoutId)
 
-// Fetch order details
-export const fetchOrderDetails = async (orderId: string) => {
-  try {
-    const response = await fetch(`${RAZORPAY_BASE_URL}/orders/${orderId}`, {
-      method: "GET",
-      headers: {
-        Authorization: getAuthHeader(),
-        "Content-Type": "application/json",
-      },
-    })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          `Razorpay API Error (${response.status}): ${
+            errorData.error?.description || errorData.message || response.statusText
+          }`,
+        )
+      }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(
-        `Razorpay API Error (${response.status}): ${
-          errorData.error?.description || errorData.message || response.statusText
-        }`,
-      )
-    }
+      const payment = await response.json()
+      return { success: true, payment }
+    } catch (error: any) {
+      console.error(`Fetch payment details attempt ${attempt} failed:`, error)
 
-    const order = await response.json()
-    return { success: true, order }
-  } catch (error: any) {
-    console.error("Fetch order details error:", error)
-    return {
-      success: false,
-      error: error.message || "Failed to fetch order details",
+      if (attempt === retries) {
+        return {
+          success: false,
+          error: error.message || "Failed to fetch payment details",
+        }
+      }
+
+      // Wait before retry
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
     }
   }
-}
 
-// Create refund
-export const createRefund = async (paymentId: string, amount?: number, notes?: Record<string, string>) => {
-  try {
-    const refundData: any = {
-      payment_id: paymentId,
-    }
-
-    if (amount) {
-      refundData.amount = amount
-    }
-
-    if (notes) {
-      refundData.notes = notes
-    }
-
-    const response = await fetch(`${RAZORPAY_BASE_URL}/refunds`, {
-      method: "POST",
-      headers: {
-        Authorization: getAuthHeader(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(refundData),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(
-        `Razorpay API Error (${response.status}): ${
-          errorData.error?.description || errorData.message || response.statusText
-        }`,
-      )
-    }
-
-    const refund = await response.json()
-    return { success: true, refund }
-  } catch (error: any) {
-    console.error("Create refund error:", error)
-    return {
-      success: false,
-      error: error.message || "Failed to create refund",
-    }
-  }
-}
-
-// List all orders
-export const listOrders = async (count = 10, skip = 0) => {
-  try {
-    const params = new URLSearchParams({
-      count: count.toString(),
-      skip: skip.toString(),
-    })
-
-    const response = await fetch(`${RAZORPAY_BASE_URL}/orders?${params}`, {
-      method: "GET",
-      headers: {
-        Authorization: getAuthHeader(),
-        "Content-Type": "application/json",
-      },
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(
-        `Razorpay API Error (${response.status}): ${
-          errorData.error?.description || errorData.message || response.statusText
-        }`,
-      )
-    }
-
-    const orders = await response.json()
-    return { success: true, orders }
-  } catch (error: any) {
-    console.error("List orders error:", error)
-    return {
-      success: false,
-      error: error.message || "Failed to list orders",
-    }
-  }
-}
-
-// List all payments
-export const listPayments = async (count = 10, skip = 0) => {
-  try {
-    const params = new URLSearchParams({
-      count: count.toString(),
-      skip: skip.toString(),
-    })
-
-    const response = await fetch(`${RAZORPAY_BASE_URL}/payments?${params}`, {
-      method: "GET",
-      headers: {
-        Authorization: getAuthHeader(),
-        "Content-Type": "application/json",
-      },
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(
-        `Razorpay API Error (${response.status}): ${
-          errorData.error?.description || errorData.message || response.statusText
-        }`,
-      )
-    }
-
-    const payments = await response.json()
-    return { success: true, payments }
-  } catch (error: any) {
-    console.error("List payments error:", error)
-    return {
-      success: false,
-      error: error.message || "Failed to list payments",
-    }
+  return {
+    success: false,
+    error: "Failed to fetch payment details after retries",
   }
 }
