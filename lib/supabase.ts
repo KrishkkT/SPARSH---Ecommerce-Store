@@ -48,6 +48,16 @@ export type Database = {
           shipping_address: string
           created_at: string
           updated_at: string
+          payment_id: string | null
+          payment_status: "pending" | "completed" | "failed" | "refunded"
+          payment_method: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          awb_code: string | null
+          shipment_id: string | null
+          courier_name: string | null
+          tracking_url: string | null
         }
         Insert: {
           id?: string
@@ -60,6 +70,16 @@ export type Database = {
           shipping_address: string
           created_at?: string
           updated_at?: string
+          payment_id?: string | null
+          payment_status?: "pending" | "completed" | "failed" | "refunded"
+          payment_method?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          awb_code?: string | null
+          shipment_id?: string | null
+          courier_name?: string | null
+          tracking_url?: string | null
         }
         Update: {
           id?: string
@@ -71,6 +91,16 @@ export type Database = {
           customer_phone?: string
           shipping_address?: string
           updated_at?: string
+          payment_id?: string | null
+          payment_status?: "pending" | "completed" | "failed" | "refunded"
+          payment_method?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          awb_code?: string | null
+          shipment_id?: string | null
+          courier_name?: string | null
+          tracking_url?: string | null
         }
       }
       order_items: {
