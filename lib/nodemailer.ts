@@ -1,8 +1,26 @@
-import nodemailer from "nodemailer"
 import type { Transporter } from "nodemailer"
+
+// Only import nodemailer on server side
+let nodemailer: any = null
+
+// Lazy load nodemailer only on server side
+const getNodemailer = async () => {
+  if (typeof window !== "undefined") {
+    throw new Error("Nodemailer can only be used on the server side")
+  }
+
+  if (!nodemailer) {
+    nodemailer = await import("nodemailer")
+  }
+  return nodemailer
+}
 
 // Validate environment variables when needed
 const validateEmailConfig = () => {
+  if (typeof window !== "undefined") {
+    throw new Error("Email configuration can only be validated on the server side")
+  }
+
   const emailUser = process.env.EMAIL_USER
   const emailPass = process.env.EMAIL_PASS
 
@@ -24,13 +42,14 @@ const validateEmailConfig = () => {
 }
 
 // Create transporter with TLS (Port 587)
-const createTransporter = (): Transporter => {
+const createTransporter = async (): Promise<Transporter> => {
   try {
     console.log("Creating nodemailer transporter (TLS)...")
 
     const { emailUser, emailPass } = validateEmailConfig()
+    const nodemailerModule = await getNodemailer()
 
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailerModule.default.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
       port: 587,
@@ -58,13 +77,14 @@ const createTransporter = (): Transporter => {
 }
 
 // Create alternative transporter with SSL (Port 465)
-const createAlternativeTransporter = (): Transporter => {
+const createAlternativeTransporter = async (): Promise<Transporter> => {
   try {
     console.log("Creating alternative nodemailer transporter (SSL)...")
 
     const { emailUser, emailPass } = validateEmailConfig()
+    const nodemailerModule = await getNodemailer()
 
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailerModule.default.createTransport({
       host: "smtp.gmail.com",
       port: 465,
       secure: true, // Use SSL
@@ -93,12 +113,17 @@ const createAlternativeTransporter = (): Transporter => {
 // Test email connection (TLS)
 export const testEmailConnection = async (): Promise<boolean> => {
   try {
+    if (typeof window !== "undefined") {
+      console.error("testEmailConnection can only be called on server side")
+      return false
+    }
+
     console.log("Testing email connection (TLS)...")
 
     // Validate config first
     validateEmailConfig()
 
-    const transporter = createTransporter()
+    const transporter = await createTransporter()
 
     console.log("Verifying SMTP connection (TLS)...")
     await transporter.verify()
@@ -120,12 +145,17 @@ export const testEmailConnection = async (): Promise<boolean> => {
 // Test alternative email connection (SSL)
 export const testAlternativeEmailConnection = async (): Promise<boolean> => {
   try {
+    if (typeof window !== "undefined") {
+      console.error("testAlternativeEmailConnection can only be called on server side")
+      return false
+    }
+
     console.log("Testing alternative email connection (SSL)...")
 
     // Validate config first
     validateEmailConfig()
 
-    const transporter = createAlternativeTransporter()
+    const transporter = await createAlternativeTransporter()
 
     console.log("Verifying alternative SMTP connection (SSL)...")
     await transporter.verify()
@@ -156,6 +186,10 @@ export const sendEmail = async ({
   html: string
   retries?: number
 }): Promise<void> => {
+  if (typeof window !== "undefined") {
+    throw new Error("sendEmail can only be called on server side")
+  }
+
   const { emailUser } = validateEmailConfig()
 
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -166,7 +200,7 @@ export const sendEmail = async ({
         from: emailUser,
       })
 
-      const transporter = createTransporter()
+      const transporter = await createTransporter()
 
       // Verify connection before sending
       console.log("Verifying connection before sending (TLS)...")
@@ -225,6 +259,10 @@ export const sendEmailAlternative = async ({
   html: string
   retries?: number
 }): Promise<void> => {
+  if (typeof window !== "undefined") {
+    throw new Error("sendEmailAlternative can only be called on server side")
+  }
+
   const { emailUser } = validateEmailConfig()
 
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -235,7 +273,7 @@ export const sendEmailAlternative = async ({
         from: emailUser,
       })
 
-      const transporter = createAlternativeTransporter()
+      const transporter = await createAlternativeTransporter()
 
       // Verify connection before sending
       console.log("Verifying connection before sending (SSL)...")
@@ -292,6 +330,13 @@ export const sendEmailSafe = async ({
   subject: string
   html: string
 }): Promise<{ success: boolean; error?: string; method?: string }> => {
+  if (typeof window !== "undefined") {
+    return {
+      success: false,
+      error: "Email sending can only be performed on server side",
+    }
+  }
+
   try {
     // Validate config first
     validateEmailConfig()

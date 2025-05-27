@@ -1,4 +1,3 @@
-// Formspree service for admin notifications
 export class FormspreeService {
   private static readonly FORMSPREE_ENDPOINT = "https://formspree.io/f/xeogbjvv"
 
@@ -10,21 +9,7 @@ export class FormspreeService {
     metadata?: Record<string, any>
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log(`FormspreeService: Sending admin notification (${data.type})...`)
-
-      const formData = {
-        _subject: `[SPARSH] ${data.subject}`,
-        type: data.type,
-        content: data.content,
-        timestamp: new Date().toISOString(),
-        ...data.metadata,
-      }
-
-      console.log("FormspreeService: Sending to Formspree:", {
-        endpoint: this.FORMSPREE_ENDPOINT,
-        type: data.type,
-        subject: data.subject,
-      })
+      console.log(`FormspreeService: Sending admin notification (${data.type})`)
 
       const response = await fetch(this.FORMSPREE_ENDPOINT, {
         method: "POST",
@@ -32,23 +17,26 @@ export class FormspreeService {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          subject: data.subject,
+          message: data.content,
+          type: data.type,
+          timestamp: new Date().toISOString(),
+          ...data.metadata,
+        }),
       })
-
-      console.log(`FormspreeService: Response status: ${response.status}`)
 
       if (!response.ok) {
         const errorText = await response.text()
         console.error("FormspreeService: Error response:", errorText)
-        throw new Error(`Formspree error: ${response.status} - ${errorText}`)
+        throw new Error(`Formspree error: ${response.status} ${response.statusText}`)
       }
 
       const result = await response.json()
-      console.log("FormspreeService: Success:", result)
-
+      console.log("FormspreeService: Admin notification sent successfully")
       return { success: true }
     } catch (error: any) {
-      console.error("FormspreeService: Error:", error)
+      console.error("FormspreeService: Error sending admin notification:", error)
       return { success: false, error: error.message }
     }
   }
@@ -77,12 +65,12 @@ ${orderDetails.shipping_address}
 
 Order Date: ${new Date(orderDetails.order_date).toLocaleString()}
 
-⚠️ ACTION REQUIRED: Process this order for shipment.
+⚠️ ACTION REQUIRED: Please process this order for shipment.
     `
 
     return this.sendAdminNotification({
       type: "new_order",
-      subject: `New Order #${orderDetails.order_id?.slice(0, 8)} - ₹${orderDetails.total_amount?.toLocaleString()}`,
+      subject: `🚨 New Order #${orderDetails.order_id?.slice(0, 8)} - ₹${orderDetails.total_amount?.toLocaleString()} - SPARSH`,
       content,
       metadata: {
         order_id: orderDetails.order_id,
@@ -110,17 +98,16 @@ Customer Details:
 Message:
 ${contactDetails.message}
 
-⚠️ ACTION REQUIRED: Please respond to this customer inquiry within 24 hours.
+⚠️ Please respond to this customer inquiry within 24 hours.
     `
 
     return this.sendAdminNotification({
       type: "contact_message",
-      subject: `New Contact Message from ${contactDetails.name}`,
+      subject: `📧 New Contact Message from ${contactDetails.name} - SPARSH`,
       content,
       metadata: {
         customer_name: contactDetails.name,
         customer_email: contactDetails.email,
-        message_length: contactDetails.message.length,
       },
     })
   }
@@ -143,7 +130,7 @@ A new customer has joined SPARSH Natural Hair Care!
 
     return this.sendAdminNotification({
       type: "user_signup",
-      subject: `New User Signup - ${userDetails.fullName || userDetails.email}`,
+      subject: `👤 New User Signup: ${userDetails.fullName || userDetails.email} - SPARSH`,
       content,
       metadata: {
         user_email: userDetails.email,
