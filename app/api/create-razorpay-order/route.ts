@@ -4,11 +4,16 @@ import { supabase } from "@/lib/supabase"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("🚀 Starting order creation process...")
+
     // Parse JSON with proper error handling
     let body
     try {
       const requestText = await request.text()
+      console.log("📝 Request body length:", requestText.length)
+
       if (!requestText) {
+        console.error("❌ Empty request body")
         return NextResponse.json(
           {
             success: false,
@@ -19,8 +24,9 @@ export async function POST(request: NextRequest) {
         )
       }
       body = JSON.parse(requestText)
+      console.log("✅ Request parsed successfully")
     } catch (parseError) {
-      console.error("JSON parsing error:", parseError)
+      console.error("❌ JSON parsing error:", parseError)
       return NextResponse.json(
         {
           success: false,
@@ -33,8 +39,9 @@ export async function POST(request: NextRequest) {
 
     const { amount, currency = "INR", receipt, userId, orderData } = body
 
-    console.log("Received order request:", {
+    console.log("📋 Received order request:", {
       amount: typeof amount,
+      amountValue: amount,
       currency,
       receipt: typeof receipt,
       userId: typeof userId,
@@ -43,6 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Comprehensive validation
     if (!amount || typeof amount !== "number" || amount <= 0) {
+      console.error("❌ Invalid amount:", amount)
       return NextResponse.json(
         {
           success: false,
@@ -54,6 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!receipt || typeof receipt !== "string") {
+      console.error("❌ Invalid receipt:", receipt)
       return NextResponse.json(
         {
           success: false,
@@ -65,6 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!userId || typeof userId !== "string") {
+      console.error("❌ Invalid userId:", userId)
       return NextResponse.json(
         {
           success: false,
@@ -76,6 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!orderData || typeof orderData !== "object") {
+      console.error("❌ Missing order data:", orderData)
       return NextResponse.json(
         {
           success: false,
@@ -90,6 +101,7 @@ export async function POST(request: NextRequest) {
     const requiredOrderFields = ["customerName", "customerEmail", "customerPhone", "shippingAddress"]
     for (const field of requiredOrderFields) {
       if (!orderData[field] || typeof orderData[field] !== "string" || orderData[field].trim() === "") {
+        console.error(`❌ Missing or invalid ${field}:`, orderData[field])
         return NextResponse.json(
           {
             success: false,
@@ -103,6 +115,7 @@ export async function POST(request: NextRequest) {
 
     // Validate items array
     if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      console.error("❌ Invalid items:", orderData.items)
       return NextResponse.json(
         {
           success: false,
@@ -114,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Razorpay order
-    console.log("Creating Razorpay order with amount:", amount)
+    console.log("💳 Creating Razorpay order with amount:", amount)
     const razorpayResult = await createRazorpayOrder({
       amount: Math.round(amount * 100), // Convert to paise
       currency,
@@ -126,8 +139,15 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log("💳 Razorpay result:", {
+      success: razorpayResult.success,
+      hasOrder: !!razorpayResult.order,
+      orderId: razorpayResult.order?.id,
+      error: razorpayResult.error,
+    })
+
     if (!razorpayResult.success) {
-      console.error("Razorpay order creation failed:", razorpayResult.error)
+      console.error("❌ Razorpay order creation failed:", razorpayResult.error)
       return NextResponse.json(
         {
           success: false,
@@ -139,7 +159,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!razorpayResult.order || !razorpayResult.order.id) {
-      console.error("Invalid Razorpay order response:", razorpayResult)
+      console.error("❌ Invalid Razorpay order response:", razorpayResult)
       return NextResponse.json(
         {
           success: false,
@@ -150,10 +170,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("Razorpay order created successfully:", razorpayResult.order.id)
+    console.log("✅ Razorpay order created successfully:", razorpayResult.order.id)
 
     // Create pending order in database
-    console.log("Creating order in database...")
+    console.log("💾 Creating order in database...")
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -172,7 +192,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (orderError) {
-      console.error("Database order creation error:", orderError)
+      console.error("❌ Database order creation error:", orderError)
       return NextResponse.json(
         {
           success: false,
@@ -184,7 +204,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!order || !order.id) {
-      console.error("Invalid order creation response:", order)
+      console.error("❌ Invalid order creation response:", order)
       return NextResponse.json(
         {
           success: false,
@@ -195,11 +215,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("Order created in database:", order.id)
+    console.log("✅ Order created in database:", order.id)
 
     // Create order items
     if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
-      console.log("Creating order items...")
+      console.log("📦 Creating order items...")
       const orderItems = orderData.items.map((item: any) => ({
         order_id: order.id,
         product_id: item.id || 0,
@@ -211,10 +231,10 @@ export async function POST(request: NextRequest) {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems)
 
       if (itemsError) {
-        console.error("Order items creation error:", itemsError)
+        console.error("❌ Order items creation error:", itemsError)
         // Don't fail the entire process, but log the error
       } else {
-        console.log("Order items created successfully")
+        console.log("✅ Order items created successfully")
       }
     }
 
@@ -230,10 +250,15 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
     }
 
-    console.log("Sending successful response:", response)
+    console.log("🎉 Sending successful response:", {
+      success: response.success,
+      razorpayOrderId: response.razorpayOrder.id,
+      orderId: response.orderId,
+    })
+
     return NextResponse.json(response, { status: 200 })
   } catch (error: any) {
-    console.error("Create Razorpay order API error:", error)
+    console.error("❌ Create Razorpay order API error:", error)
 
     // Return proper JSON error response
     return NextResponse.json(
