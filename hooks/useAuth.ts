@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
+import { EmailService } from "@/components/email-service"
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -75,6 +76,21 @@ export function useAuth() {
         } catch (profileError) {
           console.warn("Profile creation failed:", profileError)
           // Don't throw error for profile creation failure
+        }
+      }
+
+      // Send signup confirmation and admin notification
+      if (data.user) {
+        try {
+          console.log("Sending signup confirmation emails...")
+          await EmailService.sendSignupConfirmation({
+            email: data.user.email!,
+            fullName: fullName,
+          })
+          console.log("Signup confirmation emails sent successfully")
+        } catch (emailError) {
+          console.warn("Failed to send signup confirmation emails:", emailError)
+          // Don't fail signup if email fails
         }
       }
 

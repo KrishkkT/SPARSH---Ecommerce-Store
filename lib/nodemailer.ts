@@ -1,30 +1,35 @@
 import nodemailer from "nodemailer"
 import type { Transporter } from "nodemailer"
 
-// Environment variables validation
-const emailUser = process.env.EMAIL_USER
-const emailPass = process.env.EMAIL_PASS
+// Validate environment variables when needed
+const validateEmailConfig = () => {
+  const emailUser = process.env.EMAIL_USER
+  const emailPass = process.env.EMAIL_PASS
 
-console.log("Email configuration check:", {
-  hasEmailUser: !!emailUser,
-  hasEmailPass: !!emailPass,
-  emailUser: emailUser ? `${emailUser.substring(0, 5)}...` : "missing",
-})
-
-if (!emailUser || !emailPass) {
-  console.error("Email environment variables missing:", {
-    EMAIL_USER: !!emailUser,
-    EMAIL_PASS: !!emailPass,
+  console.log("Email configuration check:", {
+    hasEmailUser: !!emailUser,
+    hasEmailPass: !!emailPass,
+    emailUser: emailUser ? `${emailUser.substring(0, 5)}...` : "missing",
   })
-  throw new Error("EMAIL_USER and EMAIL_PASS environment variables must be defined")
+
+  if (!emailUser || !emailPass) {
+    console.error("Email environment variables missing:", {
+      EMAIL_USER: !!emailUser,
+      EMAIL_PASS: !!emailPass,
+    })
+    throw new Error("EMAIL_USER and EMAIL_PASS environment variables must be defined")
+  }
+
+  return { emailUser, emailPass }
 }
 
-// Create transporter with better configuration
+// Create transporter with TLS (Port 587)
 const createTransporter = (): Transporter => {
   try {
-    console.log("Creating nodemailer transporter...")
+    console.log("Creating nodemailer transporter (TLS)...")
 
-    // Use the correct nodemailer syntax
+    const { emailUser, emailPass } = validateEmailConfig()
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -35,27 +40,29 @@ const createTransporter = (): Transporter => {
         pass: emailPass,
       },
       tls: {
-        rejectUnauthorized: false, // For development/testing
+        rejectUnauthorized: false,
       },
-      connectionTimeout: 60000, // 60 seconds
-      greetingTimeout: 30000, // 30 seconds
-      socketTimeout: 60000, // 60 seconds
-      logger: process.env.NODE_ENV === "development", // Enable logging in development
-      debug: process.env.NODE_ENV === "development", // Enable debug in development
+      connectionTimeout: 60000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
+      logger: process.env.NODE_ENV === "development",
+      debug: process.env.NODE_ENV === "development",
     })
 
-    console.log("Nodemailer transporter created successfully")
+    console.log("Nodemailer transporter (TLS) created successfully")
     return transporter
   } catch (error) {
-    console.error("Failed to create email transporter:", error)
+    console.error("Failed to create email transporter (TLS):", error)
     throw new Error(`Email configuration failed: ${error}`)
   }
 }
 
-// Create alternative transporter (SSL)
+// Create alternative transporter with SSL (Port 465)
 const createAlternativeTransporter = (): Transporter => {
   try {
-    console.log("Creating alternative nodemailer transporter...")
+    console.log("Creating alternative nodemailer transporter (SSL)...")
+
+    const { emailUser, emailPass } = validateEmailConfig()
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -75,28 +82,32 @@ const createAlternativeTransporter = (): Transporter => {
       debug: process.env.NODE_ENV === "development",
     })
 
-    console.log("Alternative nodemailer transporter created successfully")
+    console.log("Alternative nodemailer transporter (SSL) created successfully")
     return transporter
   } catch (error) {
-    console.error("Failed to create alternative email transporter:", error)
+    console.error("Failed to create alternative email transporter (SSL):", error)
     throw new Error(`Alternative email configuration failed: ${error}`)
   }
 }
 
-// Test email connection
+// Test email connection (TLS)
 export const testEmailConnection = async (): Promise<boolean> => {
   try {
-    console.log("Testing email connection...")
+    console.log("Testing email connection (TLS)...")
+
+    // Validate config first
+    validateEmailConfig()
+
     const transporter = createTransporter()
 
-    console.log("Verifying SMTP connection...")
+    console.log("Verifying SMTP connection (TLS)...")
     await transporter.verify()
 
-    console.log("Email connection verified successfully")
+    console.log("Email connection (TLS) verified successfully")
     transporter.close()
     return true
   } catch (error: any) {
-    console.error("Email connection test failed:", {
+    console.error("Email connection test (TLS) failed:", {
       message: error.message,
       code: error.code,
       command: error.command,
@@ -106,20 +117,24 @@ export const testEmailConnection = async (): Promise<boolean> => {
   }
 }
 
-// Test alternative email connection
+// Test alternative email connection (SSL)
 export const testAlternativeEmailConnection = async (): Promise<boolean> => {
   try {
-    console.log("Testing alternative email connection...")
+    console.log("Testing alternative email connection (SSL)...")
+
+    // Validate config first
+    validateEmailConfig()
+
     const transporter = createAlternativeTransporter()
 
-    console.log("Verifying alternative SMTP connection...")
+    console.log("Verifying alternative SMTP connection (SSL)...")
     await transporter.verify()
 
-    console.log("Alternative email connection verified successfully")
+    console.log("Alternative email connection (SSL) verified successfully")
     transporter.close()
     return true
   } catch (error: any) {
-    console.error("Alternative email connection test failed:", {
+    console.error("Alternative email connection test (SSL) failed:", {
       message: error.message,
       code: error.code,
       command: error.command,
@@ -129,6 +144,7 @@ export const testAlternativeEmailConnection = async (): Promise<boolean> => {
   }
 }
 
+// Send email using TLS method
 export const sendEmail = async ({
   to,
   subject,
@@ -140,9 +156,11 @@ export const sendEmail = async ({
   html: string
   retries?: number
 }): Promise<void> => {
+  const { emailUser } = validateEmailConfig()
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`Sending email attempt ${attempt}:`, {
+      console.log(`Sending email (TLS) attempt ${attempt}:`, {
         to: to.substring(0, 5) + "...",
         subject,
         from: emailUser,
@@ -151,7 +169,7 @@ export const sendEmail = async ({
       const transporter = createTransporter()
 
       // Verify connection before sending
-      console.log("Verifying connection before sending...")
+      console.log("Verifying connection before sending (TLS)...")
       await transporter.verify()
 
       const mailOptions = {
@@ -162,27 +180,20 @@ export const sendEmail = async ({
         replyTo: emailUser,
       }
 
-      console.log("Sending email with options:", {
-        from: mailOptions.from,
-        to: mailOptions.to,
-        subject: mailOptions.subject,
-      })
-
+      console.log("Sending email with TLS...")
       const result = await transporter.sendMail(mailOptions)
 
-      console.log("Email sent successfully:", {
+      console.log("Email sent successfully (TLS):", {
         messageId: result.messageId,
         accepted: result.accepted,
         rejected: result.rejected,
         response: result.response,
       })
 
-      // Close the transporter
       transporter.close()
-
-      return // Success, exit the retry loop
+      return // Success
     } catch (error: any) {
-      console.error(`Email sending attempt ${attempt} failed:`, {
+      console.error(`Email sending (TLS) attempt ${attempt} failed:`, {
         error: error.message,
         code: error.code,
         command: error.command,
@@ -191,19 +202,18 @@ export const sendEmail = async ({
       })
 
       if (attempt === retries) {
-        // Last attempt failed
-        throw new Error(`Failed to send email after ${retries} attempts: ${error.message}`)
+        throw new Error(`Failed to send email (TLS) after ${retries} attempts: ${error.message}`)
       }
 
-      // Wait before retry (exponential backoff)
-      const delay = 1000 * Math.pow(2, attempt - 1) // 1s, 2s, 4s
+      // Wait before retry
+      const delay = 1000 * Math.pow(2, attempt - 1)
       console.log(`Waiting ${delay}ms before retry...`)
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
 }
 
-// Send email with alternative method
+// Send email using SSL method
 export const sendEmailAlternative = async ({
   to,
   subject,
@@ -215,9 +225,11 @@ export const sendEmailAlternative = async ({
   html: string
   retries?: number
 }): Promise<void> => {
+  const { emailUser } = validateEmailConfig()
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`Sending email (alternative) attempt ${attempt}:`, {
+      console.log(`Sending email (SSL) attempt ${attempt}:`, {
         to: to.substring(0, 5) + "...",
         subject,
         from: emailUser,
@@ -226,7 +238,7 @@ export const sendEmailAlternative = async ({
       const transporter = createAlternativeTransporter()
 
       // Verify connection before sending
-      console.log("Verifying alternative connection before sending...")
+      console.log("Verifying connection before sending (SSL)...")
       await transporter.verify()
 
       const mailOptions = {
@@ -237,27 +249,20 @@ export const sendEmailAlternative = async ({
         replyTo: emailUser,
       }
 
-      console.log("Sending email (alternative) with options:", {
-        from: mailOptions.from,
-        to: mailOptions.to,
-        subject: mailOptions.subject,
-      })
-
+      console.log("Sending email with SSL...")
       const result = await transporter.sendMail(mailOptions)
 
-      console.log("Email sent successfully (alternative):", {
+      console.log("Email sent successfully (SSL):", {
         messageId: result.messageId,
         accepted: result.accepted,
         rejected: result.rejected,
         response: result.response,
       })
 
-      // Close the transporter
       transporter.close()
-
-      return // Success, exit the retry loop
+      return // Success
     } catch (error: any) {
-      console.error(`Email sending (alternative) attempt ${attempt} failed:`, {
+      console.error(`Email sending (SSL) attempt ${attempt} failed:`, {
         error: error.message,
         code: error.code,
         command: error.command,
@@ -266,19 +271,18 @@ export const sendEmailAlternative = async ({
       })
 
       if (attempt === retries) {
-        // Last attempt failed
-        throw new Error(`Failed to send email (alternative) after ${retries} attempts: ${error.message}`)
+        throw new Error(`Failed to send email (SSL) after ${retries} attempts: ${error.message}`)
       }
 
-      // Wait before retry (exponential backoff)
-      const delay = 1000 * Math.pow(2, attempt - 1) // 1s, 2s, 4s
+      // Wait before retry
+      const delay = 1000 * Math.pow(2, attempt - 1)
       console.log(`Waiting ${delay}ms before retry...`)
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
 }
 
-// Send email with fallback to console logging in development
+// Send email with automatic fallback
 export const sendEmailSafe = async ({
   to,
   subject,
@@ -289,19 +293,22 @@ export const sendEmailSafe = async ({
   html: string
 }): Promise<{ success: boolean; error?: string; method?: string }> => {
   try {
-    console.log("Attempting to send email safely...")
+    // Validate config first
+    validateEmailConfig()
+
+    console.log("Attempting to send email safely (TLS first)...")
     await sendEmail({ to, subject, html })
-    console.log("Email sent successfully via sendEmailSafe (primary)")
-    return { success: true, method: "primary" }
+    console.log("Email sent successfully via TLS method")
+    return { success: true, method: "TLS" }
   } catch (error: any) {
-    console.error("Primary email method failed, trying alternative:", error.message)
+    console.error("TLS email method failed, trying SSL:", error.message)
 
     try {
       await sendEmailAlternative({ to, subject, html })
-      console.log("Email sent successfully via sendEmailSafe (alternative)")
-      return { success: true, method: "alternative" }
+      console.log("Email sent successfully via SSL method")
+      return { success: true, method: "SSL" }
     } catch (altError: any) {
-      console.error("Alternative email method also failed:", altError.message)
+      console.error("SSL email method also failed:", altError.message)
 
       // In development, log email content to console
       if (process.env.NODE_ENV === "development") {
@@ -314,7 +321,7 @@ export const sendEmailSafe = async ({
 
       return {
         success: false,
-        error: `Primary: ${error.message}, Alternative: ${altError.message}`,
+        error: `TLS: ${error.message}, SSL: ${altError.message}`,
       }
     }
   }

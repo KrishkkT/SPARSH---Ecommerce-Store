@@ -639,12 +639,6 @@ export default function HomePage() {
                         <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
                           {product.category}
                         </Badge>
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 ml-1">
-                            {product.rating} ({product.reviews})
-                          </span>
-                        </div>
                       </div>
                       <h3 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h3>
                       <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
@@ -1002,6 +996,7 @@ export default function HomePage() {
                   <Button
                     variant="outline"
                     onClick={() => setOrderSuccess(false)}
+                    onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
                     className="w-full border-emerald-200 hover:bg-emerald-50"
                   >
                     Continue Shopping
@@ -1064,9 +1059,6 @@ export default function HomePage() {
                     </a>
                     {user && (
                       <>
-                        <a href="/orders" className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors">
-                          Orders
-                        </a>
                         <a
                           href="/profile"
                           className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors"

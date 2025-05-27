@@ -5,6 +5,8 @@ import { EmailService } from "@/components/email-service"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("=== PAYMENT VERIFICATION STARTED ===")
+
     // Parse JSON with proper error handling
     let body
     try {
@@ -167,19 +169,29 @@ export async function POST(request: NextRequest) {
         order_id: updatedOrder.id,
         payment_id: razorpay_payment_id,
         payment_method: "Razorpay",
+        payment_status: "completed",
       }
 
-      // Send customer confirmation email
-      await EmailService.sendOrderConfirmation(orderDetails)
+      console.log("Sending confirmation emails...")
 
-      // Send admin notification email
-      await EmailService.sendAdminOrderNotification(orderDetails)
+      // Send customer confirmation email (Nodemailer)
+      const customerEmailResult = await EmailService.sendOrderConfirmation(orderDetails)
+      console.log("Customer email result:", customerEmailResult)
 
-      console.log("Confirmation emails sent successfully")
+      // Send admin notification email (Formspree)
+      const adminEmailResult = await EmailService.sendAdminOrderNotification(orderDetails)
+      console.log("Admin email result:", adminEmailResult)
+
+      console.log("Email sending completed:", {
+        customer: customerEmailResult.success,
+        admin: adminEmailResult.success,
+      })
     } catch (emailError) {
       console.error("Email sending error:", emailError)
       // Don't fail the payment verification if email fails
     }
+
+    console.log("=== PAYMENT VERIFICATION COMPLETED SUCCESSFULLY ===")
 
     return NextResponse.json(
       {
