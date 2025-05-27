@@ -50,7 +50,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push("/login")
+      window.location.href = "/login"
       return
     }
     fetchOrders()
@@ -117,6 +117,20 @@ export default function OrdersPage() {
     }
   }
 
+  const trackShipment = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/shiprocket/track?order_id=${orderId}`)
+      const data = await response.json()
+
+      if (data.success) {
+        console.log("Tracking data:", data.data)
+        // You can add a tracking modal here
+      }
+    } catch (error) {
+      console.error("Tracking error:", error)
+    }
+  }
+
   if (!user) {
     return null
   }
@@ -159,7 +173,10 @@ export default function OrdersPage() {
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-gray-600 mb-2">No Orders Yet</h2>
             <p className="text-gray-500 mb-6">You haven't placed any orders yet.</p>
-            <Button onClick={() => router.push("/")} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button
+              onClick={() => (window.location.href = "/")}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
               Start Shopping
             </Button>
           </motion.div>
@@ -243,6 +260,16 @@ export default function OrdersPage() {
                           <Button variant="outline" className="border-emerald-200 hover:bg-emerald-50">
                             <Download className="w-4 h-4 mr-2" />
                             Download Invoice
+                          </Button>
+                        )}
+                        {order.status === "shipped" && (
+                          <Button
+                            variant="outline"
+                            onClick={() => trackShipment(order.id)}
+                            className="border-emerald-200 hover:bg-emerald-50"
+                          >
+                            <Truck className="w-4 h-4 mr-2" />
+                            Track Shipment
                           </Button>
                         )}
                       </div>

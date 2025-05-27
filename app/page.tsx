@@ -11,7 +11,6 @@ import {
   ShoppingCart,
   Plus,
   Minus,
-  Star,
   Leaf,
   Shield,
   Hand,
@@ -20,9 +19,6 @@ import {
   Search,
   Menu,
   X,
-  Phone,
-  Mail,
-  MapPin,
   CheckCircle,
   AlertCircle,
   CreditCard,
@@ -995,8 +991,10 @@ export default function HomePage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setOrderSuccess(false)}
-                    onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
+                    onClick={() => {
+                      setOrderSuccess(false)
+                      document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
+                    }}
                     className="w-full border-emerald-200 hover:bg-emerald-50"
                   >
                     Continue Shopping

@@ -531,10 +531,10 @@ export default function ProfilePage() {
                           <h3 className="text-lg font-semibold text-gray-600 mb-2">No orders yet</h3>
                           <p className="text-gray-500 mb-6">Start shopping to see your orders here</p>
                           <Button
-                            onClick={() => router.push("/")}
+                            onClick={() => (window.location.href = "/orders")}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white"
                           >
-                            Start Shopping
+                            View All Orders
                           </Button>
                         </motion.div>
                       ) : (
@@ -590,7 +590,7 @@ export default function ProfilePage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => router.push("/orders")}
+                                    onClick={() => (window.location.href = "/orders")}
                                     className="mt-2 border-emerald-200 hover:bg-emerald-50"
                                   >
                                     View Details
