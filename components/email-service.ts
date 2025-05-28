@@ -220,7 +220,7 @@ export class EmailService {
     }
   }
 
-  // Return request handling - FIXED: Now sends customer email via Nodemailer
+  // Enhanced return request handling with photo support
   static async sendReturnRequest(returnDetails: {
     orderId: string
     reason: string
@@ -229,8 +229,38 @@ export class EmailService {
     customerEmail: string
     customerPhone: string
     customerAddress: string
+    refundAmount?: number
+    refundPercentage?: number
+    photoUrls?: string[]
   }) {
     // Send confirmation to customer (Nodemailer)
+    const photoSection =
+      returnDetails.photoUrls && returnDetails.photoUrls.length > 0
+        ? `
+        <h3>📸 Uploaded Photos</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0;">
+          ${returnDetails.photoUrls
+            .map(
+              (url, index) => `
+            <img src="${url}" alt="Return photo ${index + 1}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid #10b981;">
+          `,
+            )
+            .join("")}
+        </div>
+      `
+        : ""
+
+    const refundSection = returnDetails.refundAmount
+      ? `
+        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; margin: 15px 0;">
+          <h3 style="color: #065f46; margin: 0 0 10px 0;">💰 Expected Refund</h3>
+          <p style="margin: 0; font-size: 18px; font-weight: bold; color: #059669;">
+            ₹${returnDetails.refundAmount.toLocaleString()} (${returnDetails.refundPercentage}% of order value)
+          </p>
+        </div>
+      `
+      : ""
+
     const customerEmailHtml = `
       <!DOCTYPE html>
       <html>
@@ -265,6 +295,9 @@ export class EmailService {
               <p><strong>Request Date:</strong> ${new Date().toLocaleDateString()}</p>
             </div>
             
+            ${refundSection}
+            ${photoSection}
+            
             <p><strong>What happens next?</strong></p>
             <ul>
               <li>Our team will review your return request</li>
@@ -294,6 +327,11 @@ export class EmailService {
     })
 
     // Send admin notification via Formspree
+    const photoInfo =
+      returnDetails.photoUrls && returnDetails.photoUrls.length > 0
+        ? `\n📸 Photos uploaded: ${returnDetails.photoUrls.length} images\nPhoto URLs: ${returnDetails.photoUrls.join(", ")}`
+        : ""
+
     const adminResult = await FormspreeService.sendAdminNotification({
       type: "return_request",
       subject: `🔄 Return Request from ${returnDetails.customerName} - Order #${returnDetails.orderId}`,
@@ -310,7 +348,8 @@ Return Details:
 - Order ID: ${returnDetails.orderId}
 - Items: ${returnDetails.items}
 - Reason: ${returnDetails.reason}
-- Request Date: ${new Date().toLocaleString()}
+- Expected Refund: ₹${returnDetails.refundAmount?.toLocaleString() || "TBD"} (${returnDetails.refundPercentage || 60}%)
+- Request Date: ${new Date().toLocaleString()}${photoInfo}
 
 ⚠️ ACTION REQUIRED: Please review and process this return request.
       `,
@@ -318,6 +357,8 @@ Return Details:
         order_id: returnDetails.orderId,
         customer_email: returnDetails.customerEmail,
         customer_name: returnDetails.customerName,
+        refund_amount: returnDetails.refundAmount,
+        photo_count: returnDetails.photoUrls?.length || 0,
       },
     })
 

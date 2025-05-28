@@ -7,22 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  ShoppingCart,
-  Plus,
-  Minus,
-  Leaf,
-  Shield,
-  Hand,
-  Sun,
-  Heart,
-  Search,
-  Menu,
-  X,
-  CheckCircle,
-  AlertCircle,
-  CreditCard,
-} from "lucide-react"
+import { ShoppingCart, Plus, Minus, Leaf, Shield, Hand, Sun, Heart, Search, Menu, X, CheckCircle, AlertCircle, CreditCard } from 'lucide-react'
 import { useAuth } from "@/hooks/useAuth"
 import { PaymentService } from "@/components/payment-service"
 
@@ -425,7 +410,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-lg border-b border-emerald-100">
+     <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-800 via-emerald-900 to-green-900 text-white backdrop-blur-md shadow-lg border-b border-emerald-100">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -434,20 +419,22 @@ export default function HomePage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <Leaf className="w-8 h-8 text-emerald-600" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                SPARSH
-              </span>
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
+                alt="SPARSH Logo"
+                className="h-14 w-auto max-w-[160px] object-contain"
+              />
+
             </motion.div>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               {user && (
                 <>
-                  <a href="/orders" className="text-gray-700 hover:text-emerald-600 transition-colors">
+                  <a href="/orders" className="text-white hover:text-emerald-400 transition-all duration-200">
                     Orders
                   </a>
-                  <a href="/profile" className="text-gray-700 hover:text-emerald-600 transition-colors">
+                  <a href="/profile" className="text-white hover:text-emerald-400 transition-all duration-200">
                     Profile
                   </a>
                 </>
@@ -457,10 +444,10 @@ export default function HomePage() {
             <div className="flex items-center space-x-4">
               {/* Cart */}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={() => setIsCartOpen(true)}
-                className="relative border-emerald-200 hover:bg-emerald-50"
+                className="relative text-white hover:bg-emerald-700"
               >
                 <ShoppingCart className="w-5 h-5" />
                 {getTotalItems() > 0 && (
@@ -473,32 +460,32 @@ export default function HomePage() {
               {/* User Menu */}
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <span className="hidden md:block text-sm text-gray-600">
+                  <span className="hidden md:block text-sm text-white">
                     Hello, {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
                   </span>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => (window.location.href = "/profile")}
-                    className="border-emerald-200 hover:bg-emerald-50"
+                    className="relative text-white hover:bg-emerald-700"
                   >
                     Profile
                   </Button>
-                  <Button variant="outline" onClick={signOut} className="border-emerald-200 hover:bg-emerald-50">
+                  <Button variant="ghost" onClick={signOut} className="relative text-white hover:bg-emerald-700">
                     Logout
                   </Button>
                 </div>
               ) : (
                 <div className="hidden md:flex space-x-2">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => (window.location.href = "/login")}
-                    className="border-emerald-200 hover:bg-emerald-50"
+                    className="relative text-white hover:bg-emerald-700"
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => (window.location.href = "/signup")}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="relative text-white hover:bg-emerald-700"
                   >
                     Sign Up
                   </Button>
@@ -507,10 +494,10 @@ export default function HomePage() {
 
               {/* Mobile Menu Button */}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden border-emerald-200"
+                className="relative text-white hover:bg-emerald-700 md:hidden"
               >
                 <Menu className="w-5 h-5" />
               </Button>
@@ -617,7 +604,7 @@ export default function HomePage() {
               />
             </div>
             <div className="flex gap-2 flex-wrap">
-              {["All", "Hair Care", "Treatment", "Oil", "Gel", "Mask", "Dye"].map((category) => (
+              {["All", "Hair Care", "Oil", "Gel", "Mask", "Dye"].map((category) => (
                 <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
@@ -656,11 +643,6 @@ export default function HomePage() {
                       {product.featured && (
                         <Badge className="absolute top-4 left-4 bg-emerald-600 text-white">Featured</Badge>
                       )}
-                      <div className="absolute top-4 right-4">
-                        <Button size="icon" variant="secondary" className="bg-white/80 backdrop-blur-sm hover:bg-white">
-                          <Heart className="w-4 h-4" />
-                        </Button>
-                      </div>
                     </div>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-2">
@@ -677,9 +659,6 @@ export default function HomePage() {
                             ₹{product.originalPrice.toLocaleString()}
                           </span>
                         </div>
-                        <Badge className="bg-red-100 text-red-700">
-                          {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
-                        </Badge>
                       </div>
                       <Button
                         onClick={() => addToCart(product)}
@@ -709,10 +688,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Leaf className="w-8 h-8 text-emerald-400" />
-                <span className="text-2xl font-bold">SPARSH</span>
-              </div>
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
+                alt="SPARSH Logo"
+                className="h-14 w-auto max-w-[160px] object-contain"
+              />
+
               <p className="text-gray-400 mb-4">
                 Transform your hair naturally with our premium organic hair care products.
               </p>
