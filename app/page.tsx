@@ -26,15 +26,6 @@ import {
 import { useAuth } from "@/hooks/useAuth"
 import { PaymentService } from "@/components/payment-service"
 
-// Safe Supabase import with error handling
-let supabase: any = null
-try {
-  const { supabase: supabaseClient } = require("@/lib/supabase")
-  supabase = supabaseClient
-} catch (error) {
-  console.warn("Supabase not configured, running in demo mode")
-}
-
 // Replace the products array with proper image URLs
 const products = [
   {
@@ -42,7 +33,8 @@ const products = [
     name: "Shampoo",
     price: 300,
     originalPrice: 599,
-    image: "https://images.unsplash.com/photo-1748104313760-d051ffd69541?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OXx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313760-d051ffd69541?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OXx8fGVufDB8fHx8fA%3D%3D",
     description: "Premium argan oil serum for deep nourishment and shine",
     benefits: ["Reduces frizz", "Adds shine", "Nourishes scalp"],
     ingredients: ["Argan Oil", "Vitamin E", "Jojoba Oil"],
@@ -55,7 +47,8 @@ const products = [
     name: "Green Mask",
     price: 300,
     originalPrice: 699,
-    image: "https://images.unsplash.com/photo-1748104313770-356af1cda480?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8M3x8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313770-356af1cda480?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8M3x8fGVufDB8fHx8fA%3D%3D",
     description: "Intensive keratin treatment shampoo for damaged hair",
     benefits: ["Repairs damage", "Strengthens hair", "Reduces breakage"],
     ingredients: ["Keratin", "Biotin", "Coconut Oil"],
@@ -68,7 +61,8 @@ const products = [
     name: "Hair Oil",
     price: 300,
     originalPrice: 399,
-    image: "https://images.unsplash.com/photo-1748104313828-159cbf71e6fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NHx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313828-159cbf71e6fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NHx8fGVufDB8fHx8fA%3D%3D",
     description: "Deep cleansing scalp treatment with natural extracts",
     benefits: ["Cleanses scalp", "Removes buildup", "Promotes growth"],
     ingredients: ["Tea Tree Oil", "Peppermint", "Charcoal"],
@@ -81,7 +75,8 @@ const products = [
     name: "Hair Psoriasis Mask",
     price: 300,
     originalPrice: 649,
-    image: "https://images.unsplash.com/photo-1748104313769-f4d38e95b9df?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NXx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313769-f4d38e95b9df?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NXx8fGVufDB8fHx8fA%3D%3D",
     description: "Lightweight mousse for natural volume and hold",
     benefits: ["Adds volume", "Long-lasting hold", "No residue"],
     ingredients: ["Rice Protein", "Aloe Vera", "Panthenol"],
@@ -94,7 +89,8 @@ const products = [
     name: "Back Aloe Vera Gel",
     price: 250,
     originalPrice: 599,
-    image: "https://images.unsplash.com/photo-1748104313858-e350edbef125?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Mnx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313858-e350edbef125?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Mnx8fGVufDB8fHx8fA%3D%3D",
     description: "Ayurvedic hair growth oil with 12 natural herbs",
     benefits: ["Stimulates growth", "Reduces hair fall", "Strengthens roots"],
     ingredients: ["Bhringraj", "Amla", "Fenugreek"],
@@ -107,7 +103,8 @@ const products = [
     name: "Hair Smoothing Mask",
     price: 250,
     originalPrice: 449,
-    image: "https://images.unsplash.com/photo-1748104313816-29b1f3873451?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8N3x8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313816-29b1f3873451?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8N3x8fGVufDB8fHx8fA%3D%3D",
     description: "Intensive weekly treatment for dry and damaged hair",
     benefits: ["Deep hydration", "Repairs damage", "Softens hair"],
     ingredients: ["Shea Butter", "Argan Oil", "Protein Complex"],
@@ -120,7 +117,8 @@ const products = [
     name: "Natural Hair Dye",
     price: 540,
     originalPrice: 749,
-    image: "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
     description: "Natural hair dye with organic ingredients",
     benefits: ["Chemical-free coloring", "Long-lasting", "Hair-friendly"],
     ingredients: ["Henna", "Indigo", "Amla"],
@@ -133,7 +131,8 @@ const products = [
     name: "Aloe Vera Gel",
     price: 250,
     originalPrice: 549,
-    image: "https://images.unsplash.com/photo-1748104313831-12100b94aba2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OHx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313831-12100b94aba2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OHx8fGVufDB8fHx8fA%3D%3D",
     description: "Pure aloe vera gel for hair and scalp nourishment",
     benefits: ["Soothes scalp", "Moisturizes", "Reduces inflammation"],
     ingredients: ["Pure Aloe Vera", "Vitamin E", "Natural Preservatives"],
@@ -146,7 +145,8 @@ const products = [
     name: "Keratin Mask",
     price: 250,
     originalPrice: 649,
-    image: "https://images.unsplash.com/photo-1748104313866-aff6443accb0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D",
+    image:
+      "https://images.unsplash.com/photo-1748104313866-aff6443accb0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D",
     description: "Professional keratin treatment mask for salon-quality results",
     benefits: ["Smooths frizz", "Strengthens hair", "Adds shine"],
     ingredients: ["Hydrolyzed Keratin", "Argan Oil", "Silk Proteins"],
@@ -169,6 +169,13 @@ interface CheckoutForm {
   email: string
   phone: string
   address: string
+}
+
+// Helper function to generate short receipt ID (max 40 chars)
+const generateReceiptId = () => {
+  const timestamp = Date.now().toString()
+  const random = Math.random().toString(36).substring(2, 8)
+  return `SP_${timestamp}_${random}`.substring(0, 40)
 }
 
 export default function HomePage() {
@@ -252,8 +259,23 @@ export default function HomePage() {
   }
 
   const processPayment = async () => {
-    if (!checkoutForm.name || !checkoutForm.email || !checkoutForm.phone || !checkoutForm.address) {
+    if (
+      !checkoutForm.name?.trim() ||
+      !checkoutForm.email?.trim() ||
+      !checkoutForm.phone?.trim() ||
+      !checkoutForm.address?.trim()
+    ) {
       setPaymentError("Please fill in all required fields")
+      return
+    }
+
+    if (!user?.id) {
+      setPaymentError("Please log in to continue")
+      return
+    }
+
+    if (cart.length === 0) {
+      setPaymentError("Your cart is empty")
       return
     }
 
@@ -261,7 +283,39 @@ export default function HomePage() {
     setPaymentError("")
 
     try {
-      console.log("Creating Razorpay order...")
+      console.log("🚀 Starting payment process...")
+
+      // Generate short receipt ID
+      const receiptId = generateReceiptId()
+      console.log("📝 Generated receipt ID:", receiptId, "Length:", receiptId.length)
+
+      const orderPayload = {
+        amount: getTotalPrice(),
+        currency: "INR",
+        receipt: receiptId,
+        userId: user.id,
+        orderData: {
+          customerName: checkoutForm.name.trim(),
+          customerEmail: checkoutForm.email.trim(),
+          customerPhone: checkoutForm.phone.trim(),
+          shippingAddress: checkoutForm.address.trim(),
+          items: cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        },
+      }
+
+      console.log("📦 Order payload:", {
+        amount: orderPayload.amount,
+        currency: orderPayload.currency,
+        receipt: orderPayload.receipt,
+        receiptLength: orderPayload.receipt.length,
+        userId: orderPayload.userId,
+        itemsCount: orderPayload.orderData.items.length,
+      })
 
       // Create Razorpay order
       const orderResponse = await fetch("/api/create-razorpay-order", {
@@ -270,63 +324,50 @@ export default function HomePage() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({
-          amount: getTotalPrice(),
-          currency: "INR",
-          receipt: `order_${Date.now()}`,
-          userId: user?.id,
-          orderData: {
-            customerName: checkoutForm.name,
-            customerEmail: checkoutForm.email,
-            customerPhone: checkoutForm.phone,
-            shippingAddress: checkoutForm.address,
-            items: cart,
-          },
-        }),
+        body: JSON.stringify(orderPayload),
       })
 
-      console.log("Order response status:", orderResponse.status)
+      console.log("📡 Order response status:", orderResponse.status)
 
-      // Check if response is ok
       if (!orderResponse.ok) {
         const errorText = await orderResponse.text()
-        console.error("Order creation failed:", errorText)
-        throw new Error(`Server error (${orderResponse.status}): ${orderResponse.statusText}`)
-      }
+        console.error("❌ Order creation failed:", errorText)
 
-      // Check content type
-      const contentType = orderResponse.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        const responseText = await orderResponse.text()
-        console.error("Non-JSON response:", responseText)
-        throw new Error("Server returned invalid response format")
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: `Server error (${orderResponse.status})`, details: errorText }
+        }
+
+        throw new Error(errorData.details || errorData.error || `Server error (${orderResponse.status})`)
       }
 
       const orderData = await orderResponse.json()
-      console.log("Order response data:", orderData)
+      console.log("✅ Order response data:", orderData)
 
       if (!orderData.success) {
-        throw new Error(orderData.error || "Failed to create order")
+        throw new Error(orderData.details || orderData.error || "Failed to create order")
       }
 
       if (!orderData.razorpayOrder || !orderData.razorpayOrder.id) {
-        console.error("Invalid order response:", orderData)
+        console.error("❌ Invalid order response:", orderData)
         throw new Error("Invalid order response from server")
       }
 
-      console.log("Initiating Razorpay payment...")
+      console.log("💳 Initiating Razorpay payment...")
 
       // Initiate Razorpay payment
       await PaymentService.initiatePayment({
         amount: getTotalPrice(),
         currency: "INR",
         orderId: orderData.razorpayOrder.id,
-        customerName: checkoutForm.name,
-        customerEmail: checkoutForm.email,
-        customerPhone: checkoutForm.phone,
+        customerName: checkoutForm.name.trim(),
+        customerEmail: checkoutForm.email.trim(),
+        customerPhone: checkoutForm.phone.trim(),
         onSuccess: async (response: any) => {
           try {
-            console.log("Payment successful, verifying...")
+            console.log("✅ Payment successful, verifying...")
 
             // Verify payment
             const verifyResponse = await fetch("/api/verify-payment", {
@@ -345,15 +386,15 @@ export default function HomePage() {
 
             if (!verifyResponse.ok) {
               const errorText = await verifyResponse.text()
-              console.error("Verification failed:", errorText)
+              console.error("❌ Verification failed:", errorText)
               throw new Error(`Verification failed (${verifyResponse.status})`)
             }
 
             const verifyData = await verifyResponse.json()
-            console.log("Verification response:", verifyData)
+            console.log("✅ Verification response:", verifyData)
 
             if (verifyData.success) {
-              console.log("Payment verified successfully")
+              console.log("🎉 Payment verified successfully")
               setOrderSuccess(true)
               setCart([])
               setIsCheckoutOpen(false)
@@ -362,20 +403,20 @@ export default function HomePage() {
               throw new Error(verifyData.error || "Payment verification failed")
             }
           } catch (error: any) {
-            console.error("Payment verification error:", error)
+            console.error("❌ Payment verification error:", error)
             setPaymentError(error.message || "Payment verification failed")
           } finally {
             setIsProcessingPayment(false)
           }
         },
         onError: (error: any) => {
-          console.error("Payment error:", error)
+          console.error("❌ Payment error:", error)
           setPaymentError(error.description || error.error || "Payment failed")
           setIsProcessingPayment(false)
         },
       })
     } catch (error: any) {
-      console.error("Payment process error:", error)
+      console.error("❌ Payment process error:", error)
       setPaymentError(error.message || "Failed to process payment")
       setIsProcessingPayment(false)
     }
@@ -866,6 +907,7 @@ export default function HomePage() {
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, name: e.target.value })}
                         className="border-emerald-200 focus:border-emerald-400"
                         required
+                        placeholder="Enter your full name"
                       />
                     </div>
                     <div>
@@ -876,6 +918,7 @@ export default function HomePage() {
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
                         className="border-emerald-200 focus:border-emerald-400"
                         required
+                        placeholder="Enter your email address"
                       />
                     </div>
                     <div>
@@ -886,6 +929,7 @@ export default function HomePage() {
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
                         className="border-emerald-200 focus:border-emerald-400"
                         required
+                        placeholder="Enter your phone number"
                       />
                     </div>
                     <div>
@@ -896,6 +940,7 @@ export default function HomePage() {
                         className="w-full p-3 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-none"
                         rows={3}
                         required
+                        placeholder="Enter your complete shipping address"
                       />
                     </div>
                   </div>
