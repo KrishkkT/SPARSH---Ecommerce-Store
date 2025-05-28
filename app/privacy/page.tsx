@@ -27,7 +27,7 @@ export default function PrivacyPage() {
     {
       title: "1. Information We Collect",
       content:
-        "We collect information you provide directly to us, such as when you create an account, make a purchase, subscribe to our newsletter, or contact us. This may include your name, email address, phone number, shipping address, payment information, and any other information you choose to provide.",
+        "We collect information you provide directly to us, such as when you create an account, make a purchase or contact us. This may include your name, email address, phone number, shipping address, payment information, and any other information you choose to provide.",
     },
     {
       title: "2. How We Use Your Information",
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
     {
       title: "6. Third-Party Services",
       content:
-        "Our website may contain links to third-party websites or services. We are not responsible for the privacy practices of these third parties. We encourage you to read their privacy policies before providing any information.",
+        "Our website uses several third-party services to provide essential features such as payments, logistics, form handling, hosting, and database management. These services operate independently and have their own privacy policies and terms of service. We encourage you to review their respective policies before providing any personal or financial information, as we are not responsible for their privacy practices.",
     },
     {
       title: "7. Data Retention",
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
     {
       title: "9. Children's Privacy",
       content:
-        "Our services are not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If we become aware that we have collected personal information from a child under 13, we will take steps to delete such information.",
+        "Our services are not intended for children under 10 years of age. We do not knowingly collect personal information from children under 10. If we become aware that we have collected personal information from a child under 10, we will take steps to delete such information.",
     },
     {
       title: "10. International Data Transfers",
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
     {
       title: "12. Contact Us",
       content:
-        "If you have any questions about this privacy policy or our privacy practices, please contact us at rs.sparshnaturals@gmail.com or call us at +91 9409073136. You can also write to us at our address in Bhavnagar, Gujarat.",
+        "If you have any questions about this privacy policy or our privacy practices, please contact us at rs.sparshnaturals@gmail.com or call us at +91 9409073136.",
     },
   ]
 
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
                 variants={itemVariants}
                 className="bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 text-center"
               >
-                <p className="text-gray-700 font-medium">Last updated: January 2025</p>
+                <p className="text-gray-700 font-medium">Last updated: May 2025</p>
                 <p className="text-gray-600 mt-2">
                   For privacy-related inquiries, please contact us at{" "}
                   <Button

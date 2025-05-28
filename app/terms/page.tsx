@@ -27,12 +27,12 @@ export default function TermsPage() {
     {
       title: "1. Acceptance of Terms",
       content:
-        "By accessing and using the SPARSH by R Naturals website, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.",
+        "By accessing and using the SPARSH by R Naturals website, you accept and agree to be bound by the terms and provision of this agreement.",
     },
     {
       title: "2. Use License",
       content:
-        "Permission is granted to temporarily download one copy of the materials on SPARSH's website for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not: modify or copy the materials; use the materials for any commercial purpose or for any public display; attempt to reverse engineer any software contained on the website; or remove any copyright or other proprietary notations from the materials.",
+        " No Permission is granted to temporarily download a copy of the materials on SPARSH's website for personal, non-commercial transitory. Under this license you may not: modify or copy the materials; use the materials for any commercial purpose or for any public display; attempt to reverse engineer any software contained on the website; or remove any copyright or other proprietary notations from the materials.",
     },
     {
       title: "3. Disclaimer",
@@ -87,7 +87,7 @@ export default function TermsPage() {
     {
       title: "13. Changes to Terms",
       content:
-        "We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days notice prior to any new terms taking effect.",
+        "We reserve the right, at our sole discretion, to modify or replace these Terms at any time.",
     },
     {
       title: "14. Contact Information",

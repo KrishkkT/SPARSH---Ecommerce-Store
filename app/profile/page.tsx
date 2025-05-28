@@ -51,6 +51,14 @@ interface Order {
   }[]
 }
 
+interface OrderStats {
+  total: number
+  confirmed: number
+  cancelled: number
+  delivered: number
+  pending: number
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -72,10 +80,17 @@ const itemVariants = {
 }
 
 export default function ProfilePage() {
-  const { user, signOut, updateProfile, getProfile, loading } = useAuth()
+  const { user, signOut, updateProfile, getProfile, loading: authLoading } = useAuth()
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
+  const [orderStats, setOrderStats] = useState<OrderStats>({
+    total: 0,
+    confirmed: 0,
+    cancelled: 0,
+    delivered: 0,
+    pending: 0,
+  })
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setSaving] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -88,17 +103,15 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile")
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
-  }, [user, loading, router])
-
-  useEffect(() => {
-    if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login")
+        return
+      }
       loadProfile()
       loadOrders()
     }
-  }, [user])
+  }, [user, authLoading, router])
 
   const loadProfile = async () => {
     try {
@@ -136,7 +149,34 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      setOrders(ordersData || [])
+
+      const orders = ordersData || []
+      setOrders(orders)
+
+      // Calculate order statistics
+      const stats = orders.reduce(
+        (acc, order) => {
+          acc.total++
+          switch (order.status) {
+            case "confirmed":
+              acc.confirmed++
+              break
+            case "cancelled":
+              acc.cancelled++
+              break
+            case "delivered":
+              acc.delivered++
+              break
+            case "pending":
+              acc.pending++
+              break
+          }
+          return acc
+        },
+        { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 },
+      )
+
+      setOrderStats(stats)
     } catch (error) {
       console.error("Failed to load orders:", error)
     }
@@ -192,11 +232,7 @@ export default function ProfilePage() {
       .reduce((total, order) => total + order.total_amount, 0)
   }
 
-  const getCompletedOrders = () => {
-    return orders.filter((order) => order.status === "delivered").length
-  }
-
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100">
         <motion.div
@@ -310,16 +346,32 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Stats Section */}
+                {/* Enhanced Stats Section */}
                 <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <motion.div className="text-center p-4 bg-emerald-50 rounded-xl" whileHover={{ scale: 1.02 }}>
-                      <div className="text-2xl font-bold text-emerald-600">{getCompletedOrders()}</div>
-                      <div className="text-sm text-gray-600">Orders</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <motion.div className="text-center p-3 bg-emerald-50 rounded-xl" whileHover={{ scale: 1.02 }}>
+                      <div className="text-lg font-bold text-emerald-600">{orderStats.total}</div>
+                      <div className="text-xs text-gray-600">Total Orders</div>
                     </motion.div>
-                    <motion.div className="text-center p-4 bg-green-50 rounded-xl" whileHover={{ scale: 1.02 }}>
-                      <div className="text-2xl font-bold text-green-600">₹{getTotalSpent().toLocaleString()}</div>
-                      <div className="text-sm text-gray-600">Spent</div>
+                    <motion.div className="text-center p-3 bg-green-50 rounded-xl" whileHover={{ scale: 1.02 }}>
+                      <div className="text-lg font-bold text-green-600">₹{getTotalSpent().toLocaleString()}</div>
+                      <div className="text-xs text-gray-600">Total Spent</div>
+                    </motion.div>
+                    <motion.div className="text-center p-3 bg-blue-50 rounded-xl" whileHover={{ scale: 1.02 }}>
+                      <div className="text-lg font-bold text-blue-600">{orderStats.confirmed}</div>
+                      <div className="text-xs text-gray-600">Confirmed</div>
+                    </motion.div>
+                    <motion.div className="text-center p-3 bg-green-50 rounded-xl" whileHover={{ scale: 1.02 }}>
+                      <div className="text-lg font-bold text-green-600">{orderStats.delivered}</div>
+                      <div className="text-xs text-gray-600">Delivered</div>
+                    </motion.div>
+                    <motion.div className="text-center p-3 bg-yellow-50 rounded-xl" whileHover={{ scale: 1.02 }}>
+                      <div className="text-lg font-bold text-yellow-600">{orderStats.pending}</div>
+                      <div className="text-xs text-gray-600">Pending</div>
+                    </motion.div>
+                    <motion.div className="text-center p-3 bg-red-50 rounded-xl" whileHover={{ scale: 1.02 }}>
+                      <div className="text-lg font-bold text-red-600">{orderStats.cancelled}</div>
+                      <div className="text-xs text-gray-600">Cancelled</div>
                     </motion.div>
                   </div>
 
@@ -531,7 +583,7 @@ export default function ProfilePage() {
                           <h3 className="text-lg font-semibold text-gray-600 mb-2">No orders yet</h3>
                           <p className="text-gray-500 mb-6">Start shopping to see your orders here</p>
                           <Button
-                            onClick={() => (window.location.href = "/orders")}
+                            onClick={() => router.push("/orders")}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white"
                           >
                             View All Orders
@@ -539,7 +591,7 @@ export default function ProfilePage() {
                         </motion.div>
                       ) : (
                         <div className="space-y-4">
-                          {orders.map((order, index) => (
+                          {orders.slice(0, 5).map((order, index) => (
                             <motion.div
                               key={order.id}
                               initial={{ opacity: 0, y: 20 }}
@@ -590,7 +642,7 @@ export default function ProfilePage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => (window.location.href = "/orders")}
+                                    onClick={() => router.push("/orders")}
                                     className="mt-2 border-emerald-200 hover:bg-emerald-50"
                                   >
                                     View Details
@@ -599,6 +651,17 @@ export default function ProfilePage() {
                               </div>
                             </motion.div>
                           ))}
+                          {orders.length > 5 && (
+                            <div className="text-center pt-4">
+                              <Button
+                                variant="outline"
+                                onClick={() => router.push("/orders")}
+                                className="border-emerald-200 hover:bg-emerald-50"
+                              >
+                                View All Orders ({orders.length})
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>

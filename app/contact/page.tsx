@@ -189,7 +189,7 @@ export default function ContactPage() {
                     <MapPin className="w-6 h-6 text-emerald-500" />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Address</h3>
-                      <p className="text-gray-600">Bhavnagar, Gujarat</p>
+                      <p className="text-gray-600">Waghawadi Road Bhavnagar, Gujarat</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -221,14 +221,14 @@ export default function ContactPage() {
                 {/* Social Links */}
                 <div className="flex space-x-4">
                   <motion.a
-                    href="#"
+                    href="https://facebook.com/"
                     className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg hover:scale-110 transition-transform duration-300"
                     whileTap={{ scale: 0.9 }}
                   >
                     <Facebook className="w-6 h-6" />
                   </motion.a>
                   <motion.a
-                    href="#"
+                    href="https://www.instagram.com/r_naturals_18?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
                     className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg hover:scale-110 transition-transform duration-300"
                     whileTap={{ scale: 0.9 }}
                   >

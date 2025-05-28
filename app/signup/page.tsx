@@ -2,236 +2,196 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/useAuth"
+import GoogleSignInButton from "@/components/google-signin-button"
 
-export default function SignupPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  })
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-
-  const { user, signUp } = useAuth()
+export default function Signup() {
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const { signUp } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (user) {
-      router.push("/")
-    }
-  }, [user, router])
-
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
+    setError(null)
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
+    // Validate passwords match
+    if (password !== confirmPassword) {
       setError("Passwords do not match")
-      setLoading(false)
       return
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      setLoading(false)
+    // Validate password strength
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long")
       return
     }
+
+    setIsLoading(true)
 
     try {
-      await signUp(formData.email, formData.password, formData.fullName)
-      setSuccess(true)
-      // Success - redirect will happen via useEffect
-    } catch (err: any) {
-      setError(err.message || "Signup failed")
+      const { user } = await signUp(email, password, fullName)
+
+      if (user?.email_confirmed_at) {
+        // Email already confirmed, redirect to home
+        router.push("/")
+      } else {
+        // Email confirmation required
+        setIsSuccess(true)
+      }
+    } catch (error: any) {
+      console.error("Signup error:", error)
+      setError(error.message || "Failed to sign up. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 px-4 py-12">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 text-emerald-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Check your email</h2>
+          <p className="text-gray-600 mb-6">
+            We've sent a confirmation link to <strong>{email}</strong>. Please check your inbox and click the link to
+            complete your registration.
+          </p>
+          <Link
+            href="/login"
+            className="inline-block bg-emerald-600 text-white py-2 px-6 rounded-lg hover:bg-emerald-700 transition-colors duration-300"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-md"
-      >
-        <Card className="p-8 bg-white/95 backdrop-blur-md shadow-2xl border-0 relative overflow-hidden rounded-3xl">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 px-4 py-12">
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-emerald-700">Create Account</h1>
+          <p className="text-gray-600 mt-2">Join SPARSH Natural Hair Care</p>
+        </div>
 
-          <motion.h1
-            className="text-3xl font-bold text-center bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+        {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="Your Name"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors duration-300 flex items-center justify-center"
           >
-            Create Account
-          </motion.h1>
-
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-emerald-600 text-sm bg-emerald-50 p-4 rounded-xl border border-emerald-200 mb-6"
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                <span>Account created successfully! Redirecting...</span>
-              </div>
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSignup} className="space-y-6">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-              <Label htmlFor="fullName" className="text-gray-700 font-medium">
-                Full Name
-              </Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={(e) => setFormData((prev) => ({ ...prev, fullName: e.target.value }))}
-                className="mt-2 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                placeholder="Enter your full name"
-                disabled={loading}
-              />
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-              <Label htmlFor="email" className="text-gray-700 font-medium">
-                Email *
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                className="mt-2 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                placeholder="Enter your email"
-                required
-                disabled={loading}
-              />
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
-              <Label htmlFor="password" className="text-gray-700 font-medium">
-                Password *
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                  className="mt-2 pr-12 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                  placeholder="Enter your password"
-                  required
-                  disabled={loading}
-                />
-                <motion.button
-                  type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-emerald-600"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </motion.button>
-              </div>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}>
-              <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">
-                Confirm Password *
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                className="mt-2 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                placeholder="Confirm your password"
-                required
-                disabled={loading}
-              />
-            </motion.div>
-
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-red-600 text-sm bg-red-50 p-4 rounded-xl border border-red-200"
-              >
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{error}</span>
-                </div>
-              </motion.div>
+            {isLoading ? (
+              <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+            ) : (
+              "Sign Up"
             )}
+          </button>
+        </form>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-600 hover:via-green-600 hover:to-emerald-700 text-white shadow-lg py-3 rounded-xl font-semibold"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
-                    />
-                    Creating account...
-                  </div>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </motion.div>
-          </form>
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
 
-          <motion.div
-            className="mt-8 text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-          >
-            <p className="text-gray-600">
-              Already have an account?{" "}
-              <Button
-                variant="link"
-                onClick={() => router.push("/login")}
-                className="text-emerald-600 hover:text-emerald-700 font-medium p-0"
-                disabled={loading}
-              >
-                Sign in here
-              </Button>
-            </p>
-          </motion.div>
-        </Card>
-      </motion.div>
+          <div className="mt-6">
+            <GoogleSignInButton />
+          </div>
+        </div>
+
+        <p className="mt-8 text-center text-sm text-gray-600">
+          Already have an account?{" "}
+          <Link href="/login" className="text-emerald-600 hover:text-emerald-800 font-medium">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

@@ -2,240 +2,127 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
+import GoogleSignInButton from "@/components/google-signin-button"
 
-export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
+export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [resetEmail, setResetEmail] = useState("")
-  const [resetEmailSent, setResetEmailSent] = useState(false)
-
-  const { user, signIn, resetPassword } = useAuth()
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const { signIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackError = searchParams?.get("error")
 
-  useEffect(() => {
-    if (user) {
-      router.push("/")
-    }
-  }, [user, router])
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
+    setError(null)
+    setIsLoading(true)
 
     try {
       await signIn(email, password)
-    } catch (err: any) {
-      console.error("Login error:", err)
-      if (err.message?.includes("Invalid login credentials")) {
-        setError("Invalid email or password")
-      } else if (err.message?.includes("Email not confirmed")) {
-        setError("Please check your email and confirm your account")
-      } else {
-        setError(err.message || "Login failed")
-      }
+      router.push("/")
+    } catch (error: any) {
+      console.error("Login error:", error)
+      setError(error.message || "Failed to sign in. Please check your credentials.")
     } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
-
-    try {
-      await resetPassword(resetEmail)
-      setResetEmailSent(true)
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset email")
-    } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-md"
-      >
-        <Card className="p-8 bg-white/95 backdrop-blur-md shadow-2xl border-0 relative overflow-hidden rounded-3xl">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 px-4 py-12">
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-emerald-700">Welcome Back</h1>
+          <p className="text-gray-600 mt-2">Sign in to your SPARSH account</p>
+        </div>
 
-          <motion.h1
-            className="text-3xl font-bold text-center bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Welcome Back
-          </motion.h1>
-
-          {!showForgotPassword ? (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <Label htmlFor="email" className="text-gray-700 font-medium">
-                  Email *
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                  placeholder="Enter your email"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password" className="text-gray-700 font-medium">
-                  Password *
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-2 pr-12 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                    placeholder="Enter your password"
-                    required
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-emerald-600"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="text-red-600 text-sm bg-red-50 p-4 rounded-xl border border-red-200">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{error}</span>
-                  </div>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-600 hover:via-green-600 hover:to-emerald-700 text-white shadow-lg py-3 rounded-xl font-semibold"
-              >
-                {loading ? "Signing in..." : "Login"}
-              </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-emerald-600 hover:text-emerald-700 font-medium text-sm"
-                  disabled={loading}
-                >
-                  Forgot your password?
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleForgotPassword} className="space-y-6">
-              <div>
-                <Label htmlFor="reset-email" className="text-gray-700 font-medium">
-                  Email Address *
-                </Label>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  className="mt-2 bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
-                  placeholder="Enter your email to reset password"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              {error && (
-                <div className="text-red-600 text-sm bg-red-50 p-4 rounded-xl border border-red-200">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{error}</span>
-                  </div>
-                </div>
-              )}
-
-              {resetEmailSent && (
-                <div className="text-emerald-600 text-sm bg-emerald-50 p-4 rounded-xl border border-emerald-200">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Password reset email sent! Please check your inbox.</span>
-                  </div>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-600 hover:via-green-600 hover:to-emerald-700 text-white shadow-lg py-3 rounded-xl font-semibold"
-              >
-                {loading ? "Sending..." : "Send Reset Email"}
-              </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForgotPassword(false)
-                    setResetEmail("")
-                    setResetEmailSent(false)
-                    setError("")
-                  }}
-                  className="text-emerald-600 hover:text-emerald-700 font-medium text-sm"
-                  disabled={loading}
-                >
-                  Back to Login
-                </button>
-              </div>
-            </form>
-          )}
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-600">
-              Don't have an account?{" "}
-              <Button
-                variant="link"
-                onClick={() => router.push("/signup")}
-                className="text-emerald-600 hover:text-emerald-700 font-medium p-0"
-                disabled={loading}
-              >
-                Sign up here
-              </Button>
-            </p>
+        {callbackError && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+            {callbackError === "auth_callback_failed"
+              ? "Authentication failed. Please try again."
+              : "An error occurred during authentication. Please try again."}
           </div>
-        </Card>
-      </motion.div>
+        )}
+
+        {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <Link href="/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-800">
+                Forgot password?
+              </Link>
+            </div>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors duration-300 flex items-center justify-center"
+          >
+            {isLoading ? (
+              <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+            ) : (
+              "Sign In"
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <GoogleSignInButton />
+          </div>
+        </div>
+
+        <p className="mt-8 text-center text-sm text-gray-600">
+          Don't have an account?{" "}
+          <Link href="/signup" className="text-emerald-600 hover:text-emerald-800 font-medium">
+            Sign up
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

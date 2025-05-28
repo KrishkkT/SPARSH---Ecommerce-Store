@@ -10,12 +10,6 @@ export class EmailService {
     type: string
   }): Promise<{ success: boolean; error?: string; method?: string }> {
     try {
-      console.log(`EmailService: Sending customer email (${emailData.type}):`, {
-        to: emailData.to ? `${emailData.to.substring(0, 5)}...` : "missing",
-        subject: emailData.subject,
-        type: emailData.type,
-      })
-
       const result = await sendEmailSafe({
         to: emailData.to,
         subject: emailData.subject,
@@ -23,14 +17,11 @@ export class EmailService {
       })
 
       if (result.success) {
-        console.log(`EmailService: Customer email sent successfully via ${result.method}`)
         return { success: true, method: result.method }
       } else {
-        console.error(`EmailService: Customer email failed:`, result.error)
         return { success: false, error: result.error }
       }
     } catch (error: any) {
-      console.error(`EmailService: Customer email error:`, error)
       return { success: false, error: error.message }
     }
   }
@@ -43,29 +34,30 @@ export class EmailService {
     metadata?: Record<string, any>
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log(`EmailService: Sending admin notification (${data.type}):`, {
-        subject: data.subject,
-        type: data.type,
-      })
-
       const result = await FormspreeService.sendAdminNotification(data)
 
       if (result.success) {
-        console.log(`EmailService: Admin notification sent successfully via Formspree`)
         return { success: true }
       } else {
-        console.error(`EmailService: Admin notification failed:`, result.error)
         return { success: false, error: result.error }
       }
     } catch (error: any) {
-      console.error(`EmailService: Admin notification error:`, error)
       return { success: false, error: error.message }
     }
   }
 
   // Order confirmation to customer (Nodemailer)
   static async sendOrderConfirmation(orderDetails: any) {
-    console.log("EmailService: Sending order confirmation to customer...")
+    // Add invoice link to email if available
+    const invoiceSection = orderDetails.invoice_url
+      ? `
+        <div style="margin: 20px 0; text-align: center;">
+          <a href="${orderDetails.invoice_url}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Download Invoice
+          </a>
+        </div>
+      `
+      : ""
 
     const html = `
       <!DOCTYPE html>
@@ -119,6 +111,8 @@ export class EmailService {
               <h3>💰 Total Amount: ₹${orderDetails.total_amount.toLocaleString()}</h3>
             </div>
             
+            ${invoiceSection}
+            
             <h3>🚚 Shipping Information</h3>
             <p><strong>Delivery Address:</strong><br>${orderDetails.shipping_address}</p>
             <p><strong>Phone:</strong> ${orderDetails.customer_phone}</p>
@@ -148,8 +142,6 @@ export class EmailService {
 
   // Order notification to admin (Formspree)
   static async sendAdminOrderNotification(orderDetails: any) {
-    console.log("EmailService: Sending admin order notification via Formspree...")
-
     return FormspreeService.sendOrderNotification(orderDetails)
   }
 
@@ -159,8 +151,6 @@ export class EmailService {
     email: string
     message: string
   }) {
-    console.log("EmailService: Processing contact message...")
-
     // Send confirmation to customer (Nodemailer)
     const customerEmailHtml = `
       <!DOCTYPE html>
@@ -223,9 +213,112 @@ export class EmailService {
     // Send admin notification via Formspree
     const adminResult = await FormspreeService.sendContactNotification(contactDetails)
 
-    console.log("EmailService: Contact message results:", {
-      customer: customerResult.success,
-      admin: adminResult.success,
+    return {
+      success: customerResult.success && adminResult.success,
+      customerEmail: customerResult,
+      adminNotification: adminResult,
+    }
+  }
+
+  // Return request handling - FIXED: Now sends customer email via Nodemailer
+  static async sendReturnRequest(returnDetails: {
+    orderId: string
+    reason: string
+    items: string
+    customerName: string
+    customerEmail: string
+    customerPhone: string
+    customerAddress: string
+  }) {
+    // Send confirmation to customer (Nodemailer)
+    const customerEmailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Return Request Received - SPARSH</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .info-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; margin: 15px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔄 Return Request Received</h1>
+            <p>SPARSH Natural Hair Care</p>
+          </div>
+          <div class="content">
+            <h2>Hello ${returnDetails.customerName}!</h2>
+            <p>We have received your return request and will process it within 24-48 hours.</p>
+            
+            <h3>Return Request Details:</h3>
+            <div class="info-box">
+              <p><strong>Order ID:</strong> ${returnDetails.orderId}</p>
+              <p><strong>Items:</strong> ${returnDetails.items}</p>
+              <p><strong>Reason:</strong> ${returnDetails.reason}</p>
+              <p><strong>Request Date:</strong> ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <p><strong>What happens next?</strong></p>
+            <ul>
+              <li>Our team will review your return request</li>
+              <li>We'll send you return instructions within 48 hours</li>
+              <li>Once approved, you'll receive a return shipping label</li>
+              <li>Refund will be processed after we receive the returned items</li>
+            </ul>
+            
+            <p>For any questions, please contact us at +91 9409073136</p>
+          </div>
+          <div class="footer">
+            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
+            <p>Transform your hair naturally 🌿</p>
+            <p><small>This is an automated confirmation. Please do not reply to this email.</small></p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+
+    // Send customer confirmation via Nodemailer
+    const customerResult = await this.sendCustomerEmail({
+      to: returnDetails.customerEmail,
+      subject: "Return Request Received - SPARSH Natural Hair Care",
+      html: customerEmailHtml,
+      type: "return_confirmation",
+    })
+
+    // Send admin notification via Formspree
+    const adminResult = await FormspreeService.sendAdminNotification({
+      type: "return_request",
+      subject: `🔄 Return Request from ${returnDetails.customerName} - Order #${returnDetails.orderId}`,
+      content: `
+🔄 NEW RETURN REQUEST
+
+Customer Details:
+- Name: ${returnDetails.customerName}
+- Email: ${returnDetails.customerEmail}
+- Phone: ${returnDetails.customerPhone}
+- Address: ${returnDetails.customerAddress}
+
+Return Details:
+- Order ID: ${returnDetails.orderId}
+- Items: ${returnDetails.items}
+- Reason: ${returnDetails.reason}
+- Request Date: ${new Date().toLocaleString()}
+
+⚠️ ACTION REQUIRED: Please review and process this return request.
+      `,
+      metadata: {
+        order_id: returnDetails.orderId,
+        customer_email: returnDetails.customerEmail,
+        customer_name: returnDetails.customerName,
+      },
     })
 
     return {
@@ -240,8 +333,6 @@ export class EmailService {
     email: string
     fullName?: string
   }) {
-    console.log("EmailService: Sending signup confirmation to customer...")
-
     const html = `
       <!DOCTYPE html>
       <html>

@@ -33,10 +33,55 @@ export function useAuth() {
       console.log("Auth state changed:", event)
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // Handle Google sign-in profile creation
+      if (event === "SIGNED_IN" && session?.user) {
+        await handleUserProfile(session.user)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const handleUserProfile = async (user: User) => {
+    try {
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase.from("profiles").select("id").eq("id", user.id).single()
+
+      if (!existingProfile) {
+        // Create profile for new user
+        const profileData = {
+          id: user.id,
+          email: user.email!,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+          provider: user.app_metadata?.provider || "email",
+        }
+
+        const { error: profileError } = await supabase.from("profiles").insert(profileData)
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError)
+        } else {
+          console.log("Profile created successfully")
+
+          // Send welcome email for new users
+          if (user.email) {
+            try {
+              await EmailService.sendSignupConfirmation({
+                email: user.email,
+                fullName: profileData.full_name,
+              })
+            } catch (emailError) {
+              console.warn("Failed to send welcome email:", emailError)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error handling user profile:", error)
+    }
+  }
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
@@ -65,33 +110,7 @@ export function useAuth() {
         console.log("User created, email confirmation required")
         // Don't create profile yet, wait for email confirmation
       } else if (data.user) {
-        console.log("Creating user profile...")
-        try {
-          await supabase.from("profiles").insert({
-            id: data.user.id,
-            email: data.user.email!,
-            full_name: fullName || null,
-          })
-          console.log("Profile created successfully")
-        } catch (profileError) {
-          console.warn("Profile creation failed:", profileError)
-          // Don't throw error for profile creation failure
-        }
-      }
-
-      // Send signup confirmation and admin notification
-      if (data.user) {
-        try {
-          console.log("Sending signup confirmation emails...")
-          await EmailService.sendSignupConfirmation({
-            email: data.user.email!,
-            fullName: fullName,
-          })
-          console.log("Signup confirmation emails sent successfully")
-        } catch (emailError) {
-          console.warn("Failed to send signup confirmation emails:", emailError)
-          // Don't fail signup if email fails
-        }
+        await handleUserProfile(data.user)
       }
 
       return data
@@ -119,6 +138,34 @@ export function useAuth() {
       return data
     } catch (error: any) {
       console.error("Signin process error:", error)
+      throw error
+    }
+  }
+
+  const signInWithGoogle = async () => {
+    try {
+      console.log("Attempting Google signin...")
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+
+      if (error) {
+        console.error("Google signin error:", error)
+        throw error
+      }
+
+      console.log("Google signin initiated")
+      return data
+    } catch (error: any) {
+      console.error("Google signin process error:", error)
       throw error
     }
   }
@@ -188,6 +235,7 @@ export function useAuth() {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     updateProfile,

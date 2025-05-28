@@ -17,7 +17,15 @@ export default function ReturnsPage() {
   const router = useRouter()
   const [policyExpanded, setPolicyExpanded] = useState<number | null>(null)
   const [faqExpanded, setFaqExpanded] = useState<number | null>(null)
-  const [returnRequest, setReturnRequest] = useState({ orderId: "", reason: "", items: "" })
+  const [returnRequest, setReturnRequest] = useState({
+    orderId: "",
+    reason: "",
+    items: "",
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    customerAddress: "",
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderError, setOrderError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
@@ -50,22 +58,51 @@ export default function ReturnsPage() {
     setIsSubmitting(true)
     setOrderError("")
 
-    if (!returnRequest.orderId || !returnRequest.reason || !returnRequest.items) {
+    if (
+      !returnRequest.orderId ||
+      !returnRequest.reason ||
+      !returnRequest.items ||
+      !returnRequest.customerName ||
+      !returnRequest.customerEmail ||
+      !returnRequest.customerPhone
+    ) {
       setOrderError("Please fill in all required fields")
       setIsSubmitting(false)
       return
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Send return request via API
+      const response = await fetch("/api/returns/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(returnRequest),
+      })
 
-      // Reset form
-      setReturnRequest({ orderId: "", reason: "", items: "" })
-      setSuccessMessage("Your return request has been submitted successfully!")
-      setTimeout(() => setSuccessMessage(""), 5000)
+      const result = await response.json()
+
+      if (result.success) {
+        // Reset form
+        setReturnRequest({
+          orderId: "",
+          reason: "",
+          items: "",
+          customerName: "",
+          customerEmail: "",
+          customerPhone: "",
+          customerAddress: "",
+        })
+        setSuccessMessage(
+          "Your return request has been submitted successfully! You will receive confirmation emails shortly.",
+        )
+        setTimeout(() => setSuccessMessage(""), 5000)
+      } else {
+        setOrderError(result.error || "Failed to submit return request. Please try again.")
+      }
     } catch (error) {
-      setOrderError("An error occurred. Please try again.")
+      setOrderError("An error occurred while processing your return request. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -75,17 +112,24 @@ export default function ReturnsPage() {
     {
       title: "Eligibility",
       content:
-        "To be eligible for a return, items must be unused, in their original packaging, and returned within 30 days of purchase.",
+        "To be eligible for a return, items must be stored in the refrigerator (except for oil and shampoo) and must be returned within 2 days of delivery in case of issues such as receiving the wrong product, damaged items, or lesser quantity than ordered. Items must be returned in their original packaging.",
     },
     {
       title: "Process",
-      content:
-        "To initiate a return, please fill out the return request form below. Once approved, you will receive instructions on how to return your item.",
+      content: `To initiate a return, please fill out the return request form below. Once your request is reviewed and approved, you will receive detailed instructions on how to return your item.
+  
+      Before proceeding with the return, you are required to fill out the return request form and then confirm the return by contacting our support team at SPARSH Company through the following:
+    
+        Phone: +91-9409073136
+        Email: rs.sparshnaturals@gmail.com
+        Customer Care Hours: 10:00 AM - 6:00 PM (Monday to Saturday)
+
+      Please ensure that all return requests are made within 2 days of delivery and meet the eligibility criteria.`
     },
     {
       title: "Refunds",
       content:
-        "Refunds will be processed within 7-10 business days after we receive your returned item. Refunds will be issued to the original payment method.",
+        "Refunds will be processed within 7-10 business days after we receive your returned item. Refunds will be issued to the original payment method. If facing issue please contact at rs.sparshnaturals@gmail.com",
     },
   ]
 
@@ -190,19 +234,71 @@ export default function ReturnsPage() {
                         <AlertDescription>{orderError}</AlertDescription>
                       </Alert>
                     )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="customer-name">Full Name *</Label>
+                        <Input
+                          id="customer-name"
+                          type="text"
+                          value={returnRequest.customerName}
+                          onChange={(e) => setReturnRequest({ ...returnRequest, customerName: e.target.value })}
+                          className="bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="customer-email">Email *</Label>
+                        <Input
+                          id="customer-email"
+                          type="email"
+                          value={returnRequest.customerEmail}
+                          onChange={(e) => setReturnRequest({ ...returnRequest, customerEmail: e.target.value })}
+                          className="bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="customer-phone">Phone Number *</Label>
+                        <Input
+                          id="customer-phone"
+                          type="tel"
+                          value={returnRequest.customerPhone}
+                          onChange={(e) => setReturnRequest({ ...returnRequest, customerPhone: e.target.value })}
+                          className="bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="return-order-id">Order ID *</Label>
+                        <Input
+                          id="return-order-id"
+                          type="text"
+                          value={returnRequest.orderId}
+                          onChange={(e) => setReturnRequest({ ...returnRequest, orderId: e.target.value })}
+                          className="bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
+                          required
+                        />
+                      </div>
+                    </div>
+
                     <div>
-                      <Label htmlFor="return-order-id">Order ID</Label>
-                      <Input
-                        id="return-order-id"
-                        type="text"
-                        value={returnRequest.orderId}
-                        onChange={(e) => setReturnRequest({ ...returnRequest, orderId: e.target.value })}
+                      <Label htmlFor="customer-address">Address *</Label>
+                      <Textarea
+                        id="customer-address"
+                        value={returnRequest.customerAddress}
+                        onChange={(e) => setReturnRequest({ ...returnRequest, customerAddress: e.target.value })}
                         className="bg-white/80 backdrop-blur-sm border-emerald-200 focus:border-emerald-400 focus:ring-emerald-200 rounded-xl"
+                        rows={2}
                         required
                       />
                     </div>
+
                     <div>
-                      <Label htmlFor="return-reason">Reason for Return</Label>
+                      <Label htmlFor="return-reason">Reason for Return *</Label>
                       <Textarea
                         id="return-reason"
                         value={returnRequest.reason}
@@ -213,7 +309,7 @@ export default function ReturnsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="return-items">Items to Return</Label>
+                      <Label htmlFor="return-items">Items to Return *</Label>
                       <Textarea
                         id="return-items"
                         value={returnRequest.items}
@@ -238,7 +334,7 @@ export default function ReturnsPage() {
                           Submitting...
                         </div>
                       ) : (
-                        "Submit Request"
+                        "Submit Return Request"
                       )}
                     </Button>
                   </form>

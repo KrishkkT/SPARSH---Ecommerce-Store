@@ -35,15 +35,14 @@ try {
   console.warn("Supabase not configured, running in demo mode")
 }
 
-// Product data
+// Replace the products array with proper image URLs
 const products = [
   {
     id: 1,
     name: "Shampoo",
     price: 300,
     originalPrice: 599,
-    image:
-      "https://images.unsplash.com/photo-1748104313760-d051ffd69541?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OXx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313760-d051ffd69541?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OXx8fGVufDB8fHx8fA%3D%3D",
     description: "Premium argan oil serum for deep nourishment and shine",
     benefits: ["Reduces frizz", "Adds shine", "Nourishes scalp"],
     ingredients: ["Argan Oil", "Vitamin E", "Jojoba Oil"],
@@ -56,8 +55,7 @@ const products = [
     name: "Green Mask",
     price: 300,
     originalPrice: 699,
-    image:
-      "https://images.unsplash.com/photo-1748104313770-356af1cda480?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8M3x8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313770-356af1cda480?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8M3x8fGVufDB8fHx8fA%3D%3D",
     description: "Intensive keratin treatment shampoo for damaged hair",
     benefits: ["Repairs damage", "Strengthens hair", "Reduces breakage"],
     ingredients: ["Keratin", "Biotin", "Coconut Oil"],
@@ -70,8 +68,7 @@ const products = [
     name: "Hair Oil",
     price: 300,
     originalPrice: 399,
-    image:
-      "https://images.unsplash.com/photo-1748104313828-159cbf71e6fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NHx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313828-159cbf71e6fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NHx8fGVufDB8fHx8fA%3D%3D",
     description: "Deep cleansing scalp treatment with natural extracts",
     benefits: ["Cleanses scalp", "Removes buildup", "Promotes growth"],
     ingredients: ["Tea Tree Oil", "Peppermint", "Charcoal"],
@@ -84,8 +81,7 @@ const products = [
     name: "Hair Psoriasis Mask",
     price: 300,
     originalPrice: 649,
-    image:
-      "https://images.unsplash.com/photo-1748104313769-f4d38e95b9df?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NXx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313769-f4d38e95b9df?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NXx8fGVufDB8fHx8fA%3D%3D",
     description: "Lightweight mousse for natural volume and hold",
     benefits: ["Adds volume", "Long-lasting hold", "No residue"],
     ingredients: ["Rice Protein", "Aloe Vera", "Panthenol"],
@@ -98,8 +94,7 @@ const products = [
     name: "Back Aloe Vera Gel",
     price: 250,
     originalPrice: 599,
-    image:
-      "https://images.unsplash.com/photo-1748104313831-12100b94aba2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OHx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313858-e350edbef125?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Mnx8fGVufDB8fHx8fA%3D%3D",
     description: "Ayurvedic hair growth oil with 12 natural herbs",
     benefits: ["Stimulates growth", "Reduces hair fall", "Strengthens roots"],
     ingredients: ["Bhringraj", "Amla", "Fenugreek"],
@@ -112,8 +107,7 @@ const products = [
     name: "Hair Smoothing Mask",
     price: 250,
     originalPrice: 449,
-    image:
-      "https://images.unsplash.com/photo-1748104313816-29b1f3873451?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8N3x8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313816-29b1f3873451?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8N3x8fGVufDB8fHx8fA%3D%3D",
     description: "Intensive weekly treatment for dry and damaged hair",
     benefits: ["Deep hydration", "Repairs damage", "Softens hair"],
     ingredients: ["Shea Butter", "Argan Oil", "Protein Complex"],
@@ -126,8 +120,7 @@ const products = [
     name: "Natural Hair Dye",
     price: 540,
     originalPrice: 749,
-    image:
-      "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
     description: "Natural hair dye with organic ingredients",
     benefits: ["Chemical-free coloring", "Long-lasting", "Hair-friendly"],
     ingredients: ["Henna", "Indigo", "Amla"],
@@ -140,8 +133,7 @@ const products = [
     name: "Aloe Vera Gel",
     price: 250,
     originalPrice: 549,
-    image:
-      "https://images.unsplash.com/photo-1748104313831-12100b94aba2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OHx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313831-12100b94aba2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OHx8fGVufDB8fHx8fA%3D%3D",
     description: "Pure aloe vera gel for hair and scalp nourishment",
     benefits: ["Soothes scalp", "Moisturizes", "Reduces inflammation"],
     ingredients: ["Pure Aloe Vera", "Vitamin E", "Natural Preservatives"],
@@ -154,8 +146,7 @@ const products = [
     name: "Keratin Mask",
     price: 250,
     originalPrice: 649,
-    image:
-      "https://images.unsplash.com/photo-1748104313866-aff6443accb0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D",
+    image: "https://images.unsplash.com/photo-1748104313866-aff6443accb0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D",
     description: "Professional keratin treatment mask for salon-quality results",
     benefits: ["Smooths frizz", "Strengthens hair", "Adds shine"],
     ingredients: ["Hydrolyzed Keratin", "Argan Oil", "Silk Proteins"],
