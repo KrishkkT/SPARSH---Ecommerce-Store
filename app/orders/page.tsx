@@ -1,282 +1,760 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  ArrowLeft,
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  X,
+  AlertCircle,
+  Eye,
+  Download,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  CreditCard,
+  FileText,
+  ShoppingBag,
+  Loader2,
+} from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
-import { supabase } from "@/lib/supabase"
+import { getSupabaseClient } from "@/lib/supabase-client"
+
+interface OrderItem {
+  id: string
+  product_name: string
+  product_price: number
+  quantity: number
+  subtotal?: number
+}
+
+interface Order {
+  id: string
+  total_amount: number
+  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled"
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  shipping_address: string
+  created_at: string
+  updated_at: string
+  payment_status: "pending" | "completed" | "failed" | "refunded"
+  payment_method: string | null
+  shiprocket_order_id?: string
+  tracking_number?: string
+  invoice_url?: string
+  order_items?: OrderItem[]
+}
+
+interface ShiprocketTracking {
+  track_status: number
+  shipment_status: string
+  shipment_track: Array<{
+    date: string
+    status: string
+    activity: string
+    location: string
+  }>
+}
 
 export default function OrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [trackingData, setTrackingData] = useState<ShiprocketTracking | null>(null)
+  const [trackingLoading, setTrackingLoading] = useState(false)
+  const [downloadingInvoice, setDownloadingInvoice] = useState<string | null>(null)
+
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [orders, setOrders] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const orderIdFromUrl = searchParams.get("orderId")
 
   useEffect(() => {
-    if (authLoading) return
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login?redirect=/orders")
+        return
+      }
+      fetchOrders()
+    }
+  }, [user, authLoading, router])
 
+  useEffect(() => {
+    if (orderIdFromUrl && orders.length > 0) {
+      const order = orders.find((o) => o.id === orderIdFromUrl)
+      if (order) {
+        setSelectedOrder(order)
+      }
+    }
+  }, [orderIdFromUrl, orders])
+
+  const fetchOrders = async () => {
     if (!user) {
-      router.push("/login?redirect=/orders")
+      setOrders([])
+      setLoading(false)
       return
     }
 
-    const fetchOrders = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError("")
 
-        const { data, error } = await supabase
-          .from("orders")
-          .select(`
-            *,
-            order_items (*)
-          `)
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
+      console.log("🔍 Fetching orders for user:", user.id)
 
-        if (error) {
-          throw error
-        }
+      const supabase = getSupabaseClient()
 
-        setOrders(data || [])
-      } catch (err: any) {
-        console.error("Error fetching orders:", err)
-        setError("Failed to load orders. Please try again.")
-      } finally {
-        setIsLoading(false)
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          total_amount,
+          status,
+          customer_name,
+          customer_email,
+          customer_phone,
+          shipping_address,
+          created_at,
+          updated_at,
+          payment_status,
+          payment_method,
+          shiprocket_order_id,
+          tracking_number,
+          invoice_url,
+          user_id
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+
+      if (ordersError) {
+        console.error("❌ Orders fetch error:", ordersError)
+        throw ordersError
       }
-    }
 
-    fetchOrders()
-  }, [user, authLoading, router])
+      console.log("📦 Orders found:", ordersData?.length || 0)
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "processing":
-        return "bg-blue-100 text-blue-800"
-      case "shipped":
-        return "bg-indigo-100 text-indigo-800"
-      case "delivered":
-        return "bg-green-100 text-green-800"
-      case "cancelled":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+      if (!ordersData || ordersData.length === 0) {
+        console.log("📭 No orders found for user")
+        setOrders([])
+        setLoading(false)
+        return
+      }
+
+      const ordersWithItems = await Promise.all(
+        ordersData.map(async (order) => {
+          const { data: itemsData, error: itemsError } = await supabase
+            .from("order_items")
+            .select(`
+              id,
+              product_name,
+              product_price,
+              quantity
+            `)
+            .eq("order_id", order.id)
+
+          if (itemsError) {
+            console.error("❌ Order items fetch error for order", order.id, ":", itemsError)
+            return { ...order, order_items: [] }
+          }
+
+          console.log("📋 Items for order", order.id, ":", itemsData?.length || 0)
+          return { ...order, order_items: itemsData || [] }
+        }),
+      )
+
+      console.log("✅ Orders with items loaded:", ordersWithItems.length)
+      setOrders(ordersWithItems)
+    } catch (error: any) {
+      console.error("❌ Failed to fetch orders:", error)
+      setError(`Failed to load orders: ${error.message}`)
+      setOrders([])
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getPaymentStatusBadgeClass = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "paid":
-        return "bg-green-100 text-green-800"
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "failed":
-        return "bg-red-100 text-red-800"
+        return "bg-amber-100 text-amber-800 border-amber-200"
+      case "confirmed":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "shipped":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      case "delivered":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200"
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="w-4 h-4" />
+      case "confirmed":
+        return <CheckCircle className="w-4 h-4" />
+      case "shipped":
+        return <Truck className="w-4 h-4" />
+      case "delivered":
+        return <Package className="w-4 h-4" />
+      case "cancelled":
+        return <X className="w-4 h-4" />
+      default:
+        return <Clock className="w-4 h-4" />
+    }
+  }
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200"
+      case "pending":
+        return "bg-amber-100 text-amber-800 border-amber-200"
+      case "failed":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "refunded":
+        return "bg-gray-100 text-gray-800 border-gray-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
+  // Check if order is eligible for invoice download
+  const canDownloadInvoice = (order: Order) => {
+    return order.payment_status === "completed" || order.status === "confirmed" || order.status === "delivered"
+  }
+
+  const trackShipment = async (orderId: string) => {
+    if (!orderId) return
+
+    try {
+      setTrackingLoading(true)
+      const response = await fetch(`/api/shiprocket/track?order_id=${orderId}`)
+      const data = await response.json()
+
+      if (data.success && data.data.tracking_data) {
+        setTrackingData(data.data.tracking_data)
+      } else {
+        setError("Tracking information not available")
+      }
+    } catch (error) {
+      setError("Failed to track shipment")
+    } finally {
+      setTrackingLoading(false)
+    }
   }
 
   const downloadInvoice = async (orderId: string) => {
     try {
-      window.open(`/api/orders/${orderId}/invoice`, "_blank")
+      setDownloadingInvoice(orderId)
+      const response = await fetch(`/api/orders/${orderId}/invoice`)
+
+      if (!response.ok) {
+        throw new Error("Failed to generate invoice")
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.style.display = "none"
+      a.href = url
+      a.download = `SPARSH-Invoice-${orderId.slice(0, 8)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch (error) {
-      console.error("Error downloading invoice:", error)
+      setError("Failed to download invoice")
+    } finally {
+      setDownloadingInvoice(null)
     }
+  }
+
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order)
+    const newUrl = new URL(window.location.href)
+    newUrl.searchParams.set("orderId", order.id)
+    window.history.pushState({}, "", newUrl.toString())
+  }
+
+  const handleCloseDetails = () => {
+    setSelectedOrder(null)
+    setTrackingData(null)
+    const newUrl = new URL(window.location.href)
+    newUrl.searchParams.delete("orderId")
+    window.history.pushState({}, "", newUrl.toString())
   }
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+          className="w-12 h-12 border-3 border-emerald-600 border-t-transparent rounded-full"
+        />
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Orders</h1>
-          <p className="text-gray-600">Track and manage your SPARSH Natural Hair Care orders</p>
-        </div>
+  if (!user && !loading) {
+    return null
+  }
 
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="mr-4 hover:bg-emerald-100 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+              My Orders
+            </h1>
+            <p className="text-gray-600 mt-2">Track and manage your SPARSH orders</p>
           </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
+        </motion.div>
+
+        {error && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <Alert variant="destructive" className="mb-6 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              className="w-12 h-12 border-3 border-emerald-600 border-t-transparent rounded-full mb-4"
+            />
+            <p className="text-gray-600 text-lg">Loading your orders...</p>
+          </div>
         ) : orders.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-emerald-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16">
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-12 max-w-md mx-auto">
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <ShoppingBag className="w-10 h-10 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-3">No Orders Found</h2>
+              <p className="text-gray-600 mb-8">
+                You haven't placed any orders yet. Start shopping to see your orders here.
+              </p>
+              <Button
+                onClick={() => router.push("/")}
+                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
+                <ShoppingBag className="w-5 h-5 mr-2" />
+                Start Shopping
+              </Button>
             </div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">No Orders Yet</h2>
-            <p className="text-gray-600 mb-6">
-              You haven't placed any orders yet. Start shopping to see your orders here.
-            </p>
-            <button
-              onClick={() => router.push("/")}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
-            >
-              Browse Products
-            </button>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6 flex flex-wrap justify-between items-center">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mb-2 sm:mb-0">
-                    <div>
-                      <span className="text-xs text-gray-500">Order ID</span>
-                      <p className="text-sm font-medium text-gray-900">#{order.id.slice(0, 8).toUpperCase()}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-500">Date</span>
-                      <p className="text-sm font-medium text-gray-900">{formatDate(order.created_at)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-500">Total</span>
-                      <p className="text-sm font-medium text-gray-900">₹{order.total_amount.toLocaleString()}</p>
-                    </div>
-                  </div>
+            <div className="mb-6">
+              <p className="text-gray-600 text-lg">
+                Found <span className="font-semibold text-emerald-600">{orders.length}</span> order
+                {orders.length !== 1 ? "s" : ""}
+              </p>
+            </div>
 
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
-                      {order.status || "Processing"}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusBadgeClass(
-                        order.payment_status,
-                      )}`}
-                    >
-                      {order.payment_status || "Pending"}
-                    </span>
-                  </div>
-                </div>
+            <AnimatePresence>
+              {orders.map((order, index) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="bg-white/90 backdrop-blur-md shadow-xl border border-emerald-100 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-300">
+                    <CardContent className="p-8">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                        <div className="flex-1 space-y-6">
+                          {/* Order Header */}
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-800 mb-1">
+                                Order #{order.id.slice(0, 8).toUpperCase()}
+                              </h3>
+                              <div className="flex items-center text-gray-600 text-sm">
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Placed on{" "}
+                                {new Date(order.created_at).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })}
+                              </div>
+                              {order.tracking_number && (
+                                <div className="flex items-center text-blue-600 text-sm mt-1">
+                                  <Truck className="w-4 h-4 mr-2" />
+                                  Tracking: {order.tracking_number}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge className={`${getStatusColor(order.status)} border px-3 py-1`}>
+                                {getStatusIcon(order.status)}
+                                <span className="ml-2 capitalize font-medium">{order.status}</span>
+                              </Badge>
+                              <Badge className={`${getPaymentStatusColor(order.payment_status)} border px-3 py-1`}>
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                <span className="capitalize font-medium">{order.payment_status}</span>
+                              </Badge>
+                            </div>
+                          </div>
 
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="space-y-3">
-                    {order.order_items?.map((item: any) => (
-                      <div
-                        key={item.id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                      >
-                        <div className="flex items-center">
-                          <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center mr-4">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-6 w-6 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                              />
-                            </svg>
+                          {/* Order Summary */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-emerald-50 rounded-2xl p-4">
+                              <p className="text-sm text-emerald-700 font-medium mb-1">Total Amount</p>
+                              <p className="text-2xl font-bold text-emerald-800">
+                                ₹{order.total_amount.toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-2xl p-4">
+                              <p className="text-sm text-gray-600 font-medium mb-1">Payment Method</p>
+                              <p className="text-lg font-semibold text-gray-800">
+                                {order.payment_method || "Online Payment"}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-900">{item.product_name}</h4>
-                            <p className="text-xs text-gray-500">
-                              ₹{item.product_price.toLocaleString()} × {item.quantity}
-                            </p>
-                          </div>
+
+                          {/* Order Items Preview */}
+                          {order.order_items && order.order_items.length > 0 && (
+                            <div className="bg-gray-50 rounded-2xl p-4">
+                              <p className="text-sm text-gray-600 font-medium mb-3">
+                                Items ({order.order_items.length})
+                              </p>
+                              <div className="space-y-2">
+                                {order.order_items.slice(0, 2).map((item) => (
+                                  <div key={item.id} className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-800 font-medium">
+                                      {item.product_name} × {item.quantity}
+                                    </span>
+                                    <span className="text-emerald-600 font-semibold">
+                                      ₹{(item.product_price * item.quantity).toLocaleString()}
+                                    </span>
+                                  </div>
+                                ))}
+                                {order.order_items.length > 2 && (
+                                  <p className="text-xs text-gray-500 italic">
+                                    +{order.order_items.length - 2} more items
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm font-medium text-gray-900 mt-2 sm:mt-0">
-                          ₹{(item.product_price * item.quantity).toLocaleString()}
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-3 min-w-[200px]">
+                          <Button
+                            variant="outline"
+                            onClick={() => handleViewDetails(order)}
+                            className="border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 rounded-xl transition-all duration-300"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </Button>
+
+                          {/* Conditional Invoice Download Button */}
+                          {canDownloadInvoice(order) && (
+                            <Button
+                              onClick={() => downloadInvoice(order.id)}
+                              disabled={downloadingInvoice === order.id}
+                              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
+                            >
+                              {downloadingInvoice === order.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download Invoice
+                                </>
+                              )}
+                            </Button>
+                          )}
+
+                          {(order.status === "shipped" || order.status === "delivered") &&
+                            order.shiprocket_order_id && (
+                              <Button
+                                variant="outline"
+                                onClick={() => trackShipment(order.shiprocket_order_id!)}
+                                disabled={trackingLoading}
+                                className="border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl transition-all duration-300"
+                              >
+                                {trackingLoading ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Loading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Truck className="w-4 h-4 mr-2" />
+                                    Track Shipment
+                                  </>
+                                )}
+                              </Button>
+                            )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 px-4 py-4 sm:px-6 flex flex-wrap gap-3 justify-between items-center">
-                  <div className="text-sm">
-                    <p className="font-medium text-gray-900">Shipping Address:</p>
-                    <p className="text-gray-600 mt-1">{order.shipping_address}</p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {order.tracking_url && (
-                      <a
-                        href={order.tracking_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                          />
-                        </svg>
-                        Track Order
-                      </a>
-                    )}
-
-                    <button
-                      onClick={() => downloadInvoice(order.id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                        />
-                      </svg>
-                      Download Invoice
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
+
+        {/* Order Details Modal */}
+        <AnimatePresence>
+          {selectedOrder && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={handleCloseDetails}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-3xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800">Order Details</h2>
+                      <p className="text-gray-600">#{selectedOrder.id.slice(0, 8).toUpperCase()}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={handleCloseDetails} className="rounded-full">
+                      <X className="w-6 h-6" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-8">
+                  {/* Order Information */}
+                  <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-emerald-800">Order Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">Order ID</p>
+                          <p className="text-gray-800 font-semibold">{selectedOrder.id}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">Order Date</p>
+                          <p className="text-gray-800 font-semibold">
+                            {new Date(selectedOrder.created_at).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">Status</p>
+                          <Badge className={`${getStatusColor(selectedOrder.status)} border mt-1`}>
+                            {getStatusIcon(selectedOrder.status)}
+                            <span className="ml-2 capitalize">{selectedOrder.status}</span>
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">Payment Status</p>
+                          <Badge className={`${getPaymentStatusColor(selectedOrder.payment_status)} border mt-1`}>
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            {selectedOrder.payment_status}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">Payment Method</p>
+                          <p className="text-gray-800 font-semibold">
+                            {selectedOrder.payment_method || "Online Payment"}
+                          </p>
+                        </div>
+                        {selectedOrder.tracking_number && (
+                          <div>
+                            <p className="text-sm text-gray-600 font-medium">Tracking Number</p>
+                            <p className="text-blue-600 font-semibold">{selectedOrder.tracking_number}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Information */}
+                  <div className="bg-gray-50 rounded-2xl p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Customer Information</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Package className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium text-gray-800">{selectedOrder.customer_name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium text-gray-800">{selectedOrder.customer_email}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium text-gray-800">{selectedOrder.customer_phone}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-5 h-5 mt-0.5 text-gray-500" />
+                        <span className="font-medium text-gray-800">{selectedOrder.shipping_address}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  {selectedOrder.order_items && selectedOrder.order_items.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Order Items</h3>
+                      <div className="space-y-3">
+                        {selectedOrder.order_items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex justify-between items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                <Package className="w-6 h-6 text-emerald-600" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-800">{item.product_name}</p>
+                                <p className="text-sm text-gray-600">
+                                  ₹{item.product_price.toLocaleString()} × {item.quantity}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="font-bold text-emerald-600 text-lg">
+                              ₹{(item.product_price * item.quantity).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-6 p-6 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xl font-semibold text-gray-800">Total Amount</span>
+                          <span className="text-3xl font-bold text-emerald-600">
+                            ₹{selectedOrder.total_amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tracking Information */}
+                  {trackingData && (
+                    <div className="bg-blue-50 rounded-2xl p-6">
+                      <h3 className="text-lg font-semibold mb-4 text-blue-800">Tracking Information</h3>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-blue-100 rounded-xl">
+                          <p className="font-semibold text-blue-800">Status: {trackingData.shipment_status}</p>
+                        </div>
+                        {trackingData.shipment_track && trackingData.shipment_track.length > 0 && (
+                          <div className="space-y-3">
+                            {trackingData.shipment_track.map((track, index) => (
+                              <div key={index} className="flex justify-between items-start p-4 bg-white rounded-xl">
+                                <div>
+                                  <p className="font-medium text-gray-800">{track.activity}</p>
+                                  <p className="text-sm text-gray-600">{track.location}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-medium text-gray-800">{track.status}</p>
+                                  <p className="text-xs text-gray-500">{new Date(track.date).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons in Modal */}
+                  <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                    {canDownloadInvoice(selectedOrder) && (
+                      <Button
+                        onClick={() => downloadInvoice(selectedOrder.id)}
+                        disabled={downloadingInvoice === selectedOrder.id}
+                        className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl shadow-lg transition-all duration-300"
+                      >
+                        {downloadingInvoice === selectedOrder.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Invoice...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Download Invoice
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {(selectedOrder.status === "shipped" || selectedOrder.status === "delivered") &&
+                      selectedOrder.shiprocket_order_id && (
+                        <Button
+                          variant="outline"
+                          onClick={() => trackShipment(selectedOrder.shiprocket_order_id!)}
+                          disabled={trackingLoading}
+                          className="border-blue-200 hover:bg-blue-50 rounded-xl"
+                        >
+                          {trackingLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <Truck className="w-4 h-4 mr-2" />
+                              Track Shipment
+                            </>
+                          )}
+                        </Button>
+                      )}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
