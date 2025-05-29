@@ -496,7 +496,7 @@ export default function HomePage() {
 
               {/* Mobile Menu Button */}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="relative text-white hover:bg-emerald-700 md:hidden"
