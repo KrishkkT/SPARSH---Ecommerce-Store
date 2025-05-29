@@ -117,23 +117,25 @@ export default function OrdersPage() {
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(`
-          id,
-          total_amount,
-          status,
-          customer_name,
-          customer_email,
-          customer_phone,
-          shipping_address,
-          created_at,
-          updated_at,
-          payment_status,
-          payment_method,
-          shiprocket_order_id,
-          tracking_number,
-          invoice_url,
-          user_id
-        `)
+        id,
+        total_amount,
+        status,
+        customer_name,
+        customer_email,
+        customer_phone,
+        shipping_address,
+        created_at,
+        updated_at,
+        payment_status,
+        payment_method,
+        shiprocket_order_id,
+        tracking_number,
+        invoice_url,
+        user_id
+      `)
         .eq("user_id", user.id)
+        .eq("payment_status", "completed")
+        .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
       if (ordersError) {
@@ -155,11 +157,11 @@ export default function OrdersPage() {
           const { data: itemsData, error: itemsError } = await supabase
             .from("order_items")
             .select(`
-              id,
-              product_name,
-              product_price,
-              quantity
-            `)
+            id,
+            product_name,
+            product_price,
+            quantity
+          `)
             .eq("order_id", order.id)
 
           if (itemsError) {

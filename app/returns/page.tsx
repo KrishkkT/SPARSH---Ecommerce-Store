@@ -213,6 +213,7 @@ export default function ReturnsPage() {
     setIsSubmitting(true)
     setOrderError("")
 
+    // Enhanced validation
     if (!selectedOrder || !selectedReason) {
       setOrderError("Please select an order and return reason")
       setIsSubmitting(false)
@@ -221,6 +222,33 @@ export default function ReturnsPage() {
 
     if (selectedReason.requiresPhotos && photoUrls.length === 0) {
       setOrderError("Photos are required for this type of return")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (
+      !returnRequest.customerName.trim() ||
+      !returnRequest.customerEmail.trim() ||
+      !returnRequest.customerPhone.trim() ||
+      !returnRequest.customerAddress.trim()
+    ) {
+      setOrderError("Please fill in all required customer details")
+      setIsSubmitting(false)
+      return
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(returnRequest.customerEmail)) {
+      setOrderError("Please enter a valid email address")
+      setIsSubmitting(false)
+      return
+    }
+
+    // Phone validation
+    const phoneRegex = /^[0-9]{10}$/
+    if (!phoneRegex.test(returnRequest.customerPhone.replace(/\D/g, ""))) {
+      setOrderError("Please enter a valid 10-digit phone number")
       setIsSubmitting(false)
       return
     }

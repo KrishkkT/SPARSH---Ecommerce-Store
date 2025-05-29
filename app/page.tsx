@@ -7,7 +7,21 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ShoppingCart, Plus, Minus, Leaf, Shield, Hand, Sun, Heart, Search, Menu, X, CheckCircle, AlertCircle, CreditCard } from 'lucide-react'
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Leaf,
+  Shield,
+  Hand,
+  Sun,
+  Search,
+  Menu,
+  X,
+  CheckCircle,
+  AlertCircle,
+  CreditCard,
+} from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { PaymentService } from "@/components/payment-service"
 
@@ -410,8 +424,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100">
       {/* Header */}
-     <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-800 via-emerald-900 to-green-900 text-white backdrop-blur-md shadow-lg border-b border-emerald-100">
-        <div className="container mx-auto px-4 py-4">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-800 via-emerald-900 to-green-900 text-white backdrop-blur-md shadow-lg border-b border-emerald-200">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <motion.div
@@ -424,22 +438,10 @@ export default function HomePage() {
                 alt="SPARSH Logo"
                 className="h-14 w-auto max-w-[160px] object-contain"
               />
-
             </motion.div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              {user && (
-                <>
-                  <a href="/orders" className="text-white hover:text-emerald-400 transition-all duration-200">
-                    Orders
-                  </a>
-                  <a href="/profile" className="text-white hover:text-emerald-400 transition-all duration-200">
-                    Profile
-                  </a>
-                </>
-              )}
-            </nav>
+            <nav className="hidden md:flex items-center space-x-8">{user && <></>}</nav>
 
             <div className="flex items-center space-x-4">
               {/* Cart */}
@@ -466,11 +468,11 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     onClick={() => (window.location.href = "/profile")}
-                    className="relative text-white hover:bg-emerald-700"
+                    className="text-white hover:bg-emerald-700"
                   >
                     Profile
                   </Button>
-                  <Button variant="ghost" onClick={signOut} className="relative text-white hover:bg-emerald-700">
+                  <Button variant="ghost" onClick={signOut} className="text-white hover:bg-emerald-700">
                     Logout
                   </Button>
                 </div>
@@ -479,13 +481,13 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     onClick={() => (window.location.href = "/login")}
-                    className="relative text-white hover:bg-emerald-700"
+                    className="text-white hover:bg-emerald-700"
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => (window.location.href = "/signup")}
-                    className="relative text-white hover:bg-emerald-700"
+                    className="text-white hover:bg-emerald-700"
                   >
                     Sign Up
                   </Button>
@@ -494,7 +496,7 @@ export default function HomePage() {
 
               {/* Mobile Menu Button */}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="relative text-white hover:bg-emerald-700 md:hidden"
@@ -638,7 +640,7 @@ export default function HomePage() {
                       <img
                         src={product.image || "/placeholder.svg"}
                         alt={product.name}
-                        className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-64 object-contain p-4 group-hover:scale-105 transition-transform duration-500 bg-white"
                       />
                       {product.featured && (
                         <Badge className="absolute top-4 left-4 bg-emerald-600 text-white">Featured</Badge>
@@ -693,8 +695,7 @@ export default function HomePage() {
                 alt="SPARSH Logo"
                 className="h-14 w-auto max-w-[160px] object-contain"
               />
-
-              <p className="text-gray-400 mb-4">
+              <p className="text-gray-400 mt-4 mb-4">
                 Transform your hair naturally with our premium organic hair care products.
               </p>
             </div>

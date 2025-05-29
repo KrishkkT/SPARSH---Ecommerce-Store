@@ -134,18 +134,20 @@ export default function ProfilePage() {
       const { data: ordersData, error } = await supabase
         .from("orders")
         .select(`
-          id,
-          total_amount,
-          status,
-          payment_status,
-          created_at,
-          order_items (
-            product_name,
-            quantity,
-            product_price
-          )
-        `)
+        id,
+        total_amount,
+        status,
+        payment_status,
+        created_at,
+        order_items (
+          product_name,
+          quantity,
+          product_price
+        )
+      `)
         .eq("user_id", user.id)
+        .eq("payment_status", "completed")
+        .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -167,20 +169,20 @@ export default function ProfilePage() {
             case "delivered":
               acc.delivered++
               break
-            case "pending":
+            case "shipped":
               acc.pending++
               break
-          }
-          return acc
-        },
-        { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 },
-      )
+        }
+        return acc
+      },
+      { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 },
+    )
 
-      setOrderStats(stats)
-    } catch (error) {
-      console.error("Failed to load orders:", error)
-    }
+    setOrderStats(stats)
+  } catch (error) {
+    console.error("Failed to load orders:", error)
   }
+}
 
   const handleSaveProfile = async () => {
     setError("")
@@ -394,10 +396,9 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
           {/* Main Content - Right Side */}
           <motion.div variants={itemVariants} className="lg:col-span-3">
