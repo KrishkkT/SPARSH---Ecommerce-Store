@@ -185,6 +185,18 @@ export default function OrdersPage() {
     }
   }
 
+  // Add this useEffect after the existing ones
+  useEffect(() => {
+    // Refresh orders every 30 seconds to catch status updates
+    const interval = setInterval(() => {
+      if (user && !loading) {
+        fetchOrders()
+      }
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [user, loading])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":

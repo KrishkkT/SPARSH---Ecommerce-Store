@@ -59,7 +59,7 @@ export default function RSOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedOrderId, setSelectedOrderId] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("")
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(isUpdating)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -86,22 +86,22 @@ export default function RSOrdersPage() {
 
       const supabase = getSupabaseClient()
 
-      // Fetch only confirmed orders with completed payments
+      // Fetch confirmed orders with completed payments
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(`
-          id,
-          customer_name,
-          customer_email,
-          customer_phone,
-          shipping_address,
-          total_amount,
-          status,
-          payment_status,
-          created_at
-        `)
+        id,
+        customer_name,
+        customer_email,
+        customer_phone,
+        shipping_address,
+        total_amount,
+        status,
+        payment_status,
+        created_at
+      `)
         .eq("payment_status", "completed")
-        .eq("status", "confirmed")
+        .in("status", ["confirmed"])
         .order("created_at", { ascending: false })
 
       if (ordersError) {
@@ -171,21 +171,19 @@ export default function RSOrdersPage() {
         throw updateError
       }
 
-      // Update local state
-      setOrders((prevOrders) =>
-        prevOrders.map((order) => (order.id === selectedOrderId ? { ...order, status: selectedStatus } : order)),
-      )
+      // Remove the updated order from the local state since it's no longer "confirmed"
+      setOrders((prevOrders) => prevOrders.filter((order) => order.id !== selectedOrderId))
+      setFilteredOrders((prevOrders) => prevOrders.filter((order) => order.id !== selectedOrderId))
 
       setSuccess(`Order status updated to ${selectedStatus} successfully!`)
       setSelectedOrderId("")
       setSelectedStatus("")
       setSelectedOrder(null)
 
-      // Refresh the orders list to remove updated order from confirmed list
+      // Clear success message after 3 seconds
       setTimeout(() => {
-        fetchConfirmedOrders()
         setSuccess("")
-      }, 2000)
+      }, 3000)
     } catch (error: any) {
       console.error("Failed to update order status:", error)
       setError(`Failed to update order status: ${error.message}`)

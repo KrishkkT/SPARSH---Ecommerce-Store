@@ -150,28 +150,28 @@ export default function ProfilePage() {
         .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+    if (error) throw error
 
-      const orders = ordersData || []
-      setOrders(orders)
+    const orders = ordersData || []
+    setOrders(orders)
 
-      // Calculate order statistics
-      const stats = orders.reduce(
-        (acc, order) => {
-          acc.total++
-          switch (order.status) {
-            case "confirmed":
-              acc.confirmed++
-              break
-            case "cancelled":
-              acc.cancelled++
-              break
-            case "delivered":
-              acc.delivered++
-              break
-            case "shipped":
-              acc.pending++
-              break
+    // Calculate order statistics
+    const stats = orders.reduce(
+      (acc, order) => {
+        acc.total++
+        switch (order.status) {
+          case "confirmed":
+            acc.confirmed++
+            break
+          case "cancelled":
+            acc.cancelled++
+            break
+          case "delivered":
+            acc.delivered++
+            break
+          case "shipped":
+            acc.pending++
+            break
         }
         return acc
       },
