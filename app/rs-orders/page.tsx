@@ -325,15 +325,7 @@ export default function RSOrdersPage() {
                       ) : (
                         filteredOrders.map((order) => (
                           <SelectItem key={order.id} value={order.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                #{order.id.slice(0, 8)} - {order.customer_name}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                ₹{order.total_amount.toLocaleString()} •{" "}
-                                {new Date(order.created_at).toLocaleDateString()}
-                              </span>
-                            </div>
+                            #{order.id.slice(0, 8)} - {order.customer_name} (₹{order.total_amount.toLocaleString()})
                           </SelectItem>
                         ))
                       )}
@@ -353,9 +345,7 @@ export default function RSOrdersPage() {
                     <SelectContent>
                       {statusOptions.map((status) => (
                         <SelectItem key={status.value} value={status.value}>
-                          <div className="flex items-center gap-2">
-                            <Badge className={status.color}>{status.label}</Badge>
-                          </div>
+                          <span className={`px-2 py-1 rounded-md ${status.color}`}>{status.label}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
