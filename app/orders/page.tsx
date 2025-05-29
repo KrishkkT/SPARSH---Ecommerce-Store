@@ -279,7 +279,7 @@ export default function OrdersPage() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      setError("Failed to download invoice")
+      setError("Failed to download invoice, Please Contact SPARSH at rs.sparshnaturals@gmail.com to receive Invoice.")
     } finally {
       setDownloadingInvoice(null)
     }
