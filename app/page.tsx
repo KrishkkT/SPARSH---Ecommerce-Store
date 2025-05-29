@@ -7,21 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  ShoppingCart,
-  Plus,
-  Minus,
-  Leaf,
-  Shield,
-  Hand,
-  Sun,
-  Search,
-  Menu,
-  X,
-  CheckCircle,
-  AlertCircle,
-  CreditCard,
-} from "lucide-react"
+import { ShoppingCart, Plus, Minus, Leaf, Shield, Hand, Sun, Heart, Search, Menu, X, CheckCircle, AlertCircle, CreditCard } from 'lucide-react'
 import { useAuth } from "@/hooks/useAuth"
 import { PaymentService } from "@/components/payment-service"
 
@@ -441,7 +427,12 @@ export default function HomePage() {
             </motion.div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">{user && <></>}</nav>
+            <nav className="hidden md:flex items-center space-x-8">
+              {user && (
+                <>
+                </>
+              )}
+            </nav>
 
             <div className="flex items-center space-x-4">
               {/* Cart */}
@@ -451,6 +442,7 @@ export default function HomePage() {
                 onClick={() => setIsCartOpen(true)}
                 className="relative text-white hover:bg-emerald-700"
               >
+
                 <ShoppingCart className="w-5 h-5" />
                 {getTotalItems() > 0 && (
                   <Badge className="absolute -top-2 -right-2 bg-emerald-600 text-white text-xs">
@@ -468,12 +460,16 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     onClick={() => (window.location.href = "/profile")}
-                    className="text-white hover:bg-emerald-700"
+                     className="text-white hover:bg-emerald-700"
                   >
                     Profile
                   </Button>
-                  <Button variant="ghost" onClick={signOut} className="text-white hover:bg-emerald-700">
-                    Logout
+                  <Button
+                    variant="ghost" 
+                    onClick={signOut}
+                    className="text-white hover:bg-emerald-700"
+                    >
+                     Logout
                   </Button>
                 </div>
               ) : (
@@ -487,7 +483,7 @@ export default function HomePage() {
                   </Button>
                   <Button
                     onClick={() => (window.location.href = "/signup")}
-                    className="text-white hover:bg-emerald-700"
+                     className="text-white hover:bg-emerald-700"
                   >
                     Sign Up
                   </Button>
@@ -640,7 +636,7 @@ export default function HomePage() {
                       <img
                         src={product.image || "/placeholder.svg"}
                         alt={product.name}
-                        className="w-full h-64 object-contain p-4 group-hover:scale-105 transition-transform duration-500 bg-white"
+                        className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                       {product.featured && (
                         <Badge className="absolute top-4 left-4 bg-emerald-600 text-white">Featured</Badge>

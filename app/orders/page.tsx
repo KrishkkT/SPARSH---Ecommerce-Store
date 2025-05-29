@@ -117,25 +117,23 @@ export default function OrdersPage() {
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(`
-        id,
-        total_amount,
-        status,
-        customer_name,
-        customer_email,
-        customer_phone,
-        shipping_address,
-        created_at,
-        updated_at,
-        payment_status,
-        payment_method,
-        shiprocket_order_id,
-        tracking_number,
-        invoice_url,
-        user_id
-      `)
+          id,
+          total_amount,
+          status,
+          customer_name,
+          customer_email,
+          customer_phone,
+          shipping_address,
+          created_at,
+          updated_at,
+          payment_status,
+          payment_method,
+          shiprocket_order_id,
+          tracking_number,
+          invoice_url,
+          user_id
+        `)
         .eq("user_id", user.id)
-        .eq("payment_status", "completed")
-        .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
       if (ordersError) {
@@ -157,11 +155,11 @@ export default function OrdersPage() {
           const { data: itemsData, error: itemsError } = await supabase
             .from("order_items")
             .select(`
-            id,
-            product_name,
-            product_price,
-            quantity
-          `)
+              id,
+              product_name,
+              product_price,
+              quantity
+            `)
             .eq("order_id", order.id)
 
           if (itemsError) {
@@ -184,18 +182,6 @@ export default function OrdersPage() {
       setLoading(false)
     }
   }
-
-  // Add this useEffect after the existing ones
-  useEffect(() => {
-    // Refresh orders every 30 seconds to catch status updates
-    const interval = setInterval(() => {
-      if (user && !loading) {
-        fetchOrders()
-      }
-    }, 30000)
-
-    return () => clearInterval(interval)
-  }, [user, loading])
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -134,55 +134,53 @@ export default function ProfilePage() {
       const { data: ordersData, error } = await supabase
         .from("orders")
         .select(`
-        id,
-        total_amount,
-        status,
-        payment_status,
-        created_at,
-        order_items (
-          product_name,
-          quantity,
-          product_price
-        )
-      `)
+          id,
+          total_amount,
+          status,
+          payment_status,
+          created_at,
+          order_items (
+            product_name,
+            quantity,
+            product_price
+          )
+        `)
         .eq("user_id", user.id)
-        .eq("payment_status", "completed")
-        .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
-    if (error) throw error
+      if (error) throw error
 
-    const orders = ordersData || []
-    setOrders(orders)
+      const orders = ordersData || []
+      setOrders(orders)
 
-    // Calculate order statistics
-    const stats = orders.reduce(
-      (acc, order) => {
-        acc.total++
-        switch (order.status) {
-          case "confirmed":
-            acc.confirmed++
-            break
-          case "cancelled":
-            acc.cancelled++
-            break
-          case "delivered":
-            acc.delivered++
-            break
-          case "shipped":
-            acc.pending++
-            break
-        }
-        return acc
-      },
-      { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 }
-    )
+      // Calculate order statistics
+      const stats = orders.reduce(
+        (acc, order) => {
+          acc.total++
+          switch (order.status) {
+            case "confirmed":
+              acc.confirmed++
+              break
+            case "cancelled":
+              acc.cancelled++
+              break
+            case "delivered":
+              acc.delivered++
+              break
+            case "pending":
+              acc.pending++
+              break
+          }
+          return acc
+        },
+        { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 },
+      )
 
-    setOrderStats(stats)
-  } catch (error) {
-    console.error("Failed to load orders:", error)
+      setOrderStats(stats)
+    } catch (error) {
+      console.error("Failed to load orders:", error)
+    }
   }
-}
 
   const handleSaveProfile = async () => {
     setError("")
@@ -396,9 +394,10 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Main Content - Right Side */}
           <motion.div variants={itemVariants} className="lg:col-span-3">

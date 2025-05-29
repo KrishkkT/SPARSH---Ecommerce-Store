@@ -51,95 +51,86 @@ export class EmailService {
     // Add invoice link to email if available
     const invoiceSection = orderDetails.invoice_url
       ? `
-      <div style="margin: 20px 0; text-align: center;">
-        <a href="${orderDetails.invoice_url}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-          📄 Download Invoice
-        </a>
-      </div>
-    `
-      : `
-      <div style="margin: 20px 0; text-align: center; padding: 15px; background-color: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
-        <p style="margin: 0; color: #0369a1; font-weight: 500;">📄 Your invoice will be available for download from your orders page within 24 hours.</p>
-      </div>
-    `
+        <div style="margin: 20px 0; text-align: center;">
+          <a href="${orderDetails.invoice_url}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Download Invoice
+          </a>
+        </div>
+      `
+      : ""
 
     const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Order Confirmation - SPARSH</title>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; }
-        .content { padding: 30px; }
-        .order-item { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #10b981; }
-        .total { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
-        .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
-        .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="logo">🌿 SPARSH</div>
-          <h1>Order Confirmation</h1>
-          <p>Thank you for choosing SPARSH Natural Hair Care!</p>
-        </div>
-        <div class="content">
-          <h2>Hello ${orderDetails.customer_name}!</h2>
-          <p>We're excited to confirm that we've received your order. Here are the details:</p>
-          
-          <h3>📦 Order Information</h3>
-          <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
-          <p><strong>Order Date:</strong> ${new Date(orderDetails.order_date).toLocaleDateString()}</p>
-          <p><strong>Payment Method:</strong> ${orderDetails.payment_method}</p>
-          <p><strong>Payment ID:</strong> ${orderDetails.payment_id}</p>
-          
-          <h3>📋 Items Ordered</h3>
-          ${orderDetails.order_items
-            ?.map(
-              (item: any) => `
-            <div class="order-item">
-              <strong>${item.product_name}</strong><br>
-              Quantity: ${item.quantity} × ₹${item.product_price.toLocaleString()}<br>
-              <strong>Subtotal: ₹${item.subtotal.toLocaleString()}</strong>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Order Confirmation - SPARSH</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .order-item { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #10b981; }
+          .total { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
+          .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="logo">🌿 SPARSH</div>
+            <h1>Order Confirmation</h1>
+            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
+          </div>
+          <div class="content">
+            <h2>Hello ${orderDetails.customer_name}!</h2>
+            <p>We're excited to confirm that we've received your order. Here are the details:</p>
+            
+            <h3>📦 Order Information</h3>
+            <p><strong>Order ID:</strong> ${orderDetails.order_id}</p>
+            <p><strong>Order Date:</strong> ${new Date(orderDetails.order_date).toLocaleDateString()}</p>
+            <p><strong>Payment Method:</strong> ${orderDetails.payment_method}</p>
+            <p><strong>Payment ID:</strong> ${orderDetails.payment_id}</p>
+            
+            <h3>📋 Items Ordered</h3>
+            ${orderDetails.order_items
+              ?.map(
+                (item: any) => `
+              <div class="order-item">
+                <strong>${item.product_name}</strong><br>
+                Quantity: ${item.quantity} × ₹${item.product_price.toLocaleString()}<br>
+                <strong>Subtotal: ₹${item.subtotal.toLocaleString()}</strong>
+              </div>
+            `,
+              )
+              .join("")}
+            
+            <div class="total">
+              <h3>💰 Total Amount: ₹${orderDetails.total_amount.toLocaleString()}</h3>
             </div>
-          `,
-            )
-            .join("")}
-          
-          <div class="total">
-            <h3>💰 Total Amount: ₹${orderDetails.total_amount.toLocaleString()}</h3>
+            
+            ${invoiceSection}
+            
+            <h3>🚚 Shipping Information</h3>
+            <p><strong>Delivery Address:</strong><br>${orderDetails.shipping_address}</p>
+            <p><strong>Phone:</strong> ${orderDetails.customer_phone}</p>
+            
+            <h3>📞 Need Help?</h3>
+            <p>If you have any questions about your order, please contact us:</p>
+            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
+            <p>📞 Phone: +91 9409073136</p>
           </div>
-          
-          ${invoiceSection}
-          
-          <h3>🚚 Shipping Information</h3>
-          <p><strong>Delivery Address:</strong><br>${orderDetails.shipping_address}</p>
-          <p><strong>Phone:</strong> ${orderDetails.customer_phone}</p>
-          
-          <h3>📞 Need Help?</h3>
-          <p>If you have any questions about your order, please contact us:</p>
-          <p>📧 Email: rs.sparshnaturals@gmail.com</p>
-          <p>📞 Phone: +91 9409073136</p>
-          
-          <div style="margin: 30px 0; padding: 20px; background-color: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
-            <h4 style="margin: 0 0 10px 0; color: #065f46;">📱 Track Your Order</h4>
-            <p style="margin: 0; color: #047857;">You can track your order status and download your invoice from your <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://sparsh-naturals.vercel.app"}/orders" style="color: #059669; text-decoration: none; font-weight: bold;">Orders Page</a>.</p>
+          <div class="footer">
+            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
+            <p>Transform your hair naturally 🌿</p>
+            <p><small>This email was sent automatically. Please do not reply to this email.</small></p>
           </div>
         </div>
-        <div class="footer">
-          <p>Thank you for choosing SPARSH Natural Hair Care!</p>
-          <p>Transform your hair naturally 🌿</p>
-          <p><small>This email was sent automatically. Please do not reply to this email.</small></p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
+      </body>
+      </html>
+    `
 
     return this.sendCustomerEmail({
       to: orderDetails.customer_email,
