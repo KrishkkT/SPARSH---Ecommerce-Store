@@ -1,29 +1,36 @@
-# Sparsh
+# Sparsh Naturals - E-commerce Website
+
+🛒 **Live Site**: [https://sparshnaturals.shop](https://sparshnaturals.shop)  
+📧 **Support Email**: rs.sparshnaturals@gmail.com
+
+---
+
+## 🧾 About the Project
+
+Sparsh Naturals is a fully functional e-commerce platform focused on selling organic and natural products. The website offers a clean shopping experience, integrated payment gateway, automatic invoice generation, and basic admin controls.
+
+---
+
+## ⚙️ Tech Stack
+
+- **Frontend**: Next.js (App Router) + TypeScript + Tailwind CSS  
+- **Backend**: Supabase (PostgreSQL DB, Auth, and Storage)  
+- **Payments**: Razorpay  
+- **PDF Invoicing**: `@react-pdf/renderer` (Custom generator)  
+- **Deployment**: Vercel  
+
+---
+
+## ✨ Features
+
+- 🌿 Dynamic product listing with categories and stock tracking  
+- 💳 Seamless checkout via Razorpay  
+- 🧾 Automatic PDF invoice generation & download  
+- 📥 Invoices are stored securely in Supabase Storage  
+- 🔐 Basic admin view for order management  
+- 📦 Order statuses (pending, paid, shipped)  
+
+---
 
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/kjt/v0-sparsh)
-[![Built by KT ](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/MBxgzuZGpYI)
-
-## Overview
-
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
-
-## Deployment
-
-Your project is live at:
-
-**[https://vercel.com/kjt/v0-sparsh](https://vercel.com/kjt/v0-sparsh)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/MBxgzuZGpYI](https://v0.dev/chat/projects/MBxgzuZGpYI)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+✅ Built with ❤️ by [KT](https://kjt.vercel.app) | © 2025

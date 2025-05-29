@@ -118,7 +118,7 @@ const products = [
     originalPrice: 749,
     image:
       "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
-    description: "Natural hair dye with organic ingredients comes with 3 different packs for 3 different process.",
+    description: "Natural hair dye comes with 3 different packs for 3 different process.",
     benefits: ["Chemical-free coloring", "Long-lasting", "Hair-friendly"],
     ingredients: ["Henna", "Indigo", "Amla"],
     inStock: true,
@@ -754,8 +754,11 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 SPARSH Natural Hair Care. All rights reserved.</p>
+            <p> &copy; 2025 SPARSH Natural Hair Care. All rights reserved. <br />  
+              ✅ Built with 💻 by <a href="https://kjt.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none' }}>KT</a> & Managed by <a href="https://thems.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none' }}>MS</a>
+            </p>
           </div>
+
         </div>
       </footer>
 
