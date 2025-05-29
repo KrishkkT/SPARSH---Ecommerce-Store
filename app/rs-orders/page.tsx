@@ -59,7 +59,7 @@ export default function RSOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedOrderId, setSelectedOrderId] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("")
-  const [isUpdating, setIsUpdating] = useState(isUpdating)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
