@@ -175,7 +175,7 @@ export default function ProfilePage() {
         }
         return acc
       },
-      { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 },
+      { total: 0, confirmed: 0, cancelled: 0, delivered: 0, pending: 0 }
     )
 
     setOrderStats(stats)
