@@ -501,7 +501,6 @@ export default function HomePage() {
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="relative text-white hover:bg-emerald-700 md:hidden"
               >
-                <Menu className="w-5 h-5" />
               </Button>
             </div>
           </div>
