@@ -1,7 +1,6 @@
-export class FormspreeService {
-  private static readonly FORMSPREE_ENDPOINT = "https://formspree.io/f/xeogbjvv"
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xdkogqko"
 
-  // Send admin notification via Formspree
+export class FormspreeService {
   static async sendAdminNotification(data: {
     type: string
     subject: string
@@ -9,9 +8,7 @@ export class FormspreeService {
     metadata?: Record<string, any>
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log(`FormspreeService: Sending admin notification (${data.type})`)
-
-      const response = await fetch(this.FORMSPREE_ENDPOINT, {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -21,90 +18,75 @@ export class FormspreeService {
           subject: data.subject,
           message: data.content,
           type: data.type,
+          metadata: JSON.stringify(data.metadata || {}),
           timestamp: new Date().toISOString(),
-          ...data.metadata,
         }),
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("FormspreeService: Error response:", errorText)
-        throw new Error(`Formspree error: ${response.status} ${response.statusText}`)
+      if (response.ok) {
+        return { success: true }
+      } else {
+        const errorData = await response.json()
+        return { success: false, error: errorData.error || "Failed to send notification" }
       }
-
-      const result = await response.json()
-      console.log("FormspreeService: Admin notification sent successfully")
-      return { success: true }
     } catch (error: any) {
-      console.error("FormspreeService: Error sending admin notification:", error)
       return { success: false, error: error.message }
     }
   }
 
-  // Send order notification to admin
   static async sendOrderNotification(orderDetails: any): Promise<{ success: boolean; error?: string }> {
-    const content = `
-🎉 NEW ORDER RECEIVED!
+    return this.sendAdminNotification({
+      type: "new_order",
+      subject: `🛒 New Order from ${orderDetails.customer_name} - Order #${orderDetails.order_id}`,
+      content: `
+🛒 NEW ORDER RECEIVED
+
+Customer Details:
+- Name: ${orderDetails.customer_name}
+- Email: ${orderDetails.customer_email}
+- Phone: ${orderDetails.customer_phone}
+- Address: ${orderDetails.shipping_address}
 
 Order Details:
 - Order ID: ${orderDetails.order_id}
-- Customer: ${orderDetails.customer_name}
-- Email: ${orderDetails.customer_email}
-- Phone: ${orderDetails.customer_phone}
-- Total Amount: ₹${orderDetails.total_amount?.toLocaleString()}
+- Total Amount: ₹${orderDetails.total_amount.toLocaleString()}
 - Payment Method: ${orderDetails.payment_method}
 - Payment ID: ${orderDetails.payment_id}
+- Order Date: ${new Date(orderDetails.order_date).toLocaleString()}
 
-Items Ordered:
-${orderDetails.order_items
-  ?.map((item: any) => `- ${item.product_name} (Qty: ${item.quantity}) - ₹${item.subtotal?.toLocaleString()}`)
-  .join("\n")}
-
-Shipping Address:
-${orderDetails.shipping_address}
-
-Order Date: ${new Date(orderDetails.order_date).toLocaleString()}
+Items:
+${orderDetails.order_items?.map((item: any) => `- ${item.product_name} × ${item.quantity} = ₹${(item.product_price * item.quantity).toLocaleString()}`).join("\n")}
 
 ⚠️ ACTION REQUIRED: Please process this order for shipment.
-    `
-
-    return this.sendAdminNotification({
-      type: "new_order",
-      subject: `🚨 New Order #${orderDetails.order_id?.slice(0, 8)} - ₹${orderDetails.total_amount?.toLocaleString()} - SPARSH`,
-      content,
+      `,
       metadata: {
         order_id: orderDetails.order_id,
         customer_email: orderDetails.customer_email,
         total_amount: orderDetails.total_amount,
-        payment_id: orderDetails.payment_id,
       },
     })
   }
 
-  // Send contact notification to admin
   static async sendContactNotification(contactDetails: {
     name: string
     email: string
     message: string
   }): Promise<{ success: boolean; error?: string }> {
-    const content = `
-📧 NEW CONTACT MESSAGE
+    return this.sendAdminNotification({
+      type: "contact_message",
+      subject: `💬 New Contact Message from ${contactDetails.name}`,
+      content: `
+💬 NEW CONTACT MESSAGE
 
 Customer Details:
 - Name: ${contactDetails.name}
 - Email: ${contactDetails.email}
-- Message Time: ${new Date().toLocaleString()}
 
 Message:
 ${contactDetails.message}
 
-⚠️ Please respond to this customer inquiry within 24 hours.
-    `
-
-    return this.sendAdminNotification({
-      type: "contact_message",
-      subject: `📧 New Contact Message from ${contactDetails.name} - SPARSH`,
-      content,
+⚠️ ACTION REQUIRED: Please respond to this customer inquiry.
+      `,
       metadata: {
         customer_name: contactDetails.name,
         customer_email: contactDetails.email,
@@ -112,26 +94,23 @@ ${contactDetails.message}
     })
   }
 
-  // Send signup notification to admin
   static async sendSignupNotification(userDetails: {
     email: string
     fullName?: string
   }): Promise<{ success: boolean; error?: string }> {
-    const content = `
+    return this.sendAdminNotification({
+      type: "new_signup",
+      subject: `👤 New User Signup - ${userDetails.fullName || userDetails.email}`,
+      content: `
 👤 NEW USER SIGNUP
 
 User Details:
 - Name: ${userDetails.fullName || "Not provided"}
 - Email: ${userDetails.email}
-- Signup Time: ${new Date().toLocaleString()}
+- Signup Date: ${new Date().toLocaleString()}
 
-A new customer has joined SPARSH Natural Hair Care!
-    `
-
-    return this.sendAdminNotification({
-      type: "user_signup",
-      subject: `👤 New User Signup: ${userDetails.fullName || userDetails.email} - SPARSH`,
-      content,
+A new user has joined SPARSH Natural Hair Care!
+      `,
       metadata: {
         user_email: userDetails.email,
         user_name: userDetails.fullName,

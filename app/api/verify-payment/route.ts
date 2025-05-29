@@ -113,6 +113,20 @@ export async function POST(request: NextRequest) {
         order_items: order.order_items,
         invoice_url: order.invoice_url,
       })
+
+      // Send admin notification
+      await EmailService.sendAdminOrderNotification({
+        order_id: order.id,
+        customer_name: order.customer_name,
+        customer_email: order.customer_email,
+        customer_phone: order.customer_phone,
+        shipping_address: order.shipping_address,
+        payment_method: order.payment_method,
+        payment_id: razorpay_payment_id,
+        total_amount: order.total_amount,
+        order_items: order.order_items,
+        order_date: order.created_at,
+      })
     } catch (emailError) {
       console.error("Order confirmation email error:", emailError)
       // Don't fail the payment verification if email fails

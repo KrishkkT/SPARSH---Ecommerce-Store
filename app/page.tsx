@@ -640,7 +640,7 @@ export default function HomePage() {
                       <img
                         src={product.image || "/placeholder.svg"}
                         alt={product.name}
-                        className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-64 object-contain group-hover:scale-110 transition-transform duration-500 p-4"
                       />
                       {product.featured && (
                         <Badge className="absolute top-4 left-4 bg-emerald-600 text-white">Featured</Badge>

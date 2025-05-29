@@ -452,4 +452,166 @@ Return Details:
       adminNotification: adminResult,
     }
   }
+
+  // Status update notification to customer (Nodemailer)
+  static async sendStatusUpdateNotification(statusDetails: {
+    orderId: string
+    customerName: string
+    customerEmail: string
+    oldStatus: string
+    newStatus: string
+    orderItems?: Array<{
+      product_name: string
+      quantity: number
+      product_price: number
+    }>
+    totalAmount: number
+  }) {
+    const statusMessages = {
+      shipped: {
+        title: "📦 Your Order Has Been Shipped!",
+        message: "Great news! Your order is on its way to you.",
+        color: "#8b5cf6",
+        icon: "🚚",
+      },
+      delivered: {
+        title: "✅ Your Order Has Been Delivered!",
+        message: "Your order has been successfully delivered. We hope you love your SPARSH products!",
+        color: "#10b981",
+        icon: "📦",
+      },
+      cancelled: {
+        title: "❌ Your Order Has Been Cancelled",
+        message: "Your order has been cancelled. If you have any questions, please contact our support team.",
+        color: "#ef4444",
+        icon: "🚫",
+      },
+    }
+
+    const statusInfo = statusMessages[statusDetails.newStatus as keyof typeof statusMessages] || {
+      title: "📋 Order Status Updated",
+      message: `Your order status has been updated to: ${statusDetails.newStatus}`,
+      color: "#6b7280",
+      icon: "📋",
+    }
+
+    const itemsSection =
+      statusDetails.orderItems && statusDetails.orderItems.length > 0
+        ? `
+        <h3>📋 Order Items</h3>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+          ${statusDetails.orderItems
+            .map(
+              (item) => `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">
+              <span><strong>${item.product_name}</strong> × ${item.quantity}</span>
+              <span style="color: #10b981; font-weight: bold;">₹${(item.product_price * item.quantity).toLocaleString()}</span>
+            </div>
+          `,
+            )
+            .join("")}
+          <div style="border-top: 2px solid #10b981; padding-top: 10px; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;">
+              <span>Total Amount:</span>
+              <span style="color: #10b981;">₹${statusDetails.totalAmount.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      `
+        : ""
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Order Status Update - SPARSH</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+          .header { background: ${statusInfo.color}; color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .status-box { background: #f0fdf4; padding: 20px; border-radius: 8px; border-left: 4px solid ${statusInfo.color}; margin: 15px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; background: #f9f9f9; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${statusInfo.icon} ${statusInfo.title}</h1>
+            <p>SPARSH Natural Hair Care</p>
+          </div>
+          <div class="content">
+            <h2>Hello ${statusDetails.customerName}!</h2>
+            
+            <div class="status-box">
+              <h3 style="color: ${statusInfo.color}; margin: 0 0 10px 0;">${statusInfo.title}</h3>
+              <p style="margin: 0; font-size: 16px;">${statusInfo.message}</p>
+            </div>
+            
+            <h3>📦 Order Information</h3>
+            <p><strong>Order ID:</strong> ${statusDetails.orderId}</p>
+            <p><strong>Previous Status:</strong> ${statusDetails.oldStatus}</p>
+            <p><strong>New Status:</strong> <span style="color: ${statusInfo.color}; font-weight: bold;">${statusDetails.newStatus}</span></p>
+            <p><strong>Update Time:</strong> ${new Date().toLocaleString()}</p>
+            
+            ${itemsSection}
+            
+            <h3>📞 Need Help?</h3>
+            <p>If you have any questions about your order, please contact us:</p>
+            <p>📧 Email: rs.sparshnaturals@gmail.com</p>
+            <p>📞 Phone: +91 9409073136</p>
+          </div>
+          <div class="footer">
+            <p>Thank you for choosing SPARSH Natural Hair Care!</p>
+            <p>Transform your hair naturally 🌿</p>
+            <p><small>This email was sent automatically. Please do not reply to this email.</small></p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+
+    // Send customer notification
+    const customerResult = await this.sendCustomerEmail({
+      to: statusDetails.customerEmail,
+      subject: `${statusInfo.icon} Order Status Update - ${statusDetails.orderId.slice(0, 8)} - SPARSH`,
+      html,
+      type: "status_update",
+    })
+
+    // Send admin notification via Formspree
+    const adminResult = await FormspreeService.sendAdminNotification({
+      type: "status_update",
+      subject: `📋 Order Status Updated: ${statusDetails.orderId.slice(0, 8)} → ${statusDetails.newStatus}`,
+      content: `
+📋 ORDER STATUS UPDATED
+
+Order Details:
+- Order ID: ${statusDetails.orderId}
+- Customer: ${statusDetails.customerName}
+- Email: ${statusDetails.customerEmail}
+- Previous Status: ${statusDetails.oldStatus}
+- New Status: ${statusDetails.newStatus}
+- Total Amount: ₹${statusDetails.totalAmount.toLocaleString()}
+- Update Time: ${new Date().toLocaleString()}
+
+Status change processed successfully. Customer notification email sent.
+    `,
+      metadata: {
+        order_id: statusDetails.orderId,
+        customer_email: statusDetails.customerEmail,
+        old_status: statusDetails.oldStatus,
+        new_status: statusDetails.newStatus,
+        total_amount: statusDetails.totalAmount,
+      },
+    })
+
+    return {
+      success: customerResult.success && adminResult.success,
+      customerEmail: customerResult,
+      adminNotification: adminResult,
+    }
+  }
 }

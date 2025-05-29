@@ -146,6 +146,8 @@ export default function ProfilePage() {
           )
         `)
         .eq("user_id", user.id)
+        .eq("payment_status", "completed")
+        .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
       if (error) throw error

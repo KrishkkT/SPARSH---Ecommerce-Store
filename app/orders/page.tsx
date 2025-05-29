@@ -134,6 +134,8 @@ export default function OrdersPage() {
           user_id
         `)
         .eq("user_id", user.id)
+        .eq("payment_status", "completed")
+        .in("status", ["confirmed", "shipped", "delivered", "cancelled"])
         .order("created_at", { ascending: false })
 
       if (ordersError) {

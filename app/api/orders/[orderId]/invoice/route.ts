@@ -31,6 +31,17 @@ export async function GET(request: NextRequest, { params }: { params: { orderId:
       )
     }
 
+    // Check if order is eligible for invoice (completed payment)
+    if (order.payment_status !== "completed") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invoice not available for this order",
+        },
+        { status: 400 },
+      )
+    }
+
     // Check if invoice already exists
     if (order.invoice_url) {
       console.log("📄 Invoice already exists, fetching from storage")
@@ -42,6 +53,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderId:
             headers: {
               "Content-Type": "application/pdf",
               "Content-Disposition": `attachment; filename="SPARSH-Invoice-${orderId.slice(0, 8)}.pdf"`,
+              "Cache-Control": "public, max-age=3600",
             },
           })
         }
@@ -81,6 +93,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderId:
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="SPARSH-Invoice-${orderId.slice(0, 8)}.pdf"`,
+        "Cache-Control": "public, max-age=3600",
       },
     })
   } catch (error: any) {

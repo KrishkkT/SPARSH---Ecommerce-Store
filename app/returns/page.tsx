@@ -153,6 +153,7 @@ export default function ReturnsPage() {
           )
         `)
         .eq("user_id", user.id)
+        .eq("payment_status", "completed")
         .in("status", ["confirmed", "delivered"])
         .order("created_at", { ascending: false })
 
@@ -215,6 +216,30 @@ export default function ReturnsPage() {
 
     if (!selectedOrder || !selectedReason) {
       setOrderError("Please select an order and return reason")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!returnRequest.customerName.trim()) {
+      setOrderError("Please enter your full name")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!returnRequest.customerEmail.trim()) {
+      setOrderError("Please enter your email address")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!returnRequest.customerPhone.trim()) {
+      setOrderError("Please enter your phone number")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!returnRequest.customerAddress.trim()) {
+      setOrderError("Please enter your return address")
       setIsSubmitting(false)
       return
     }

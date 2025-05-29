@@ -4,44 +4,49 @@ import { EmailService } from "@/components/email-service"
 
 export async function POST(request: NextRequest) {
   try {
-    const returnData = await request.json()
+    const body = await request.json()
+    const {
+      orderId,
+      reason,
+      items,
+      customerName,
+      customerEmail,
+      customerPhone,
+      customerAddress,
+      additionalNotes,
+      photoUrls,
+      refundPercentage,
+      refundAmount,
+      returnReasonDetails,
+    } = body
 
     // Validate required fields
-    if (
-      !returnData.orderId ||
-      !returnData.reason ||
-      !returnData.customerName ||
-      !returnData.customerEmail ||
-      !returnData.customerPhone
-    ) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
+    if (!orderId || !reason || !customerName || !customerEmail || !customerPhone || !customerAddress) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing required fields",
+        },
+        { status: 400 },
+      )
     }
 
     const supabase = getSupabaseClient()
 
-    // Get user from session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 })
-    }
-
-    // Verify order belongs to user and is eligible for return
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("id", returnData.orderId)
-      .eq("user_id", user.id)
-      .single()
+    // Verify the order exists and belongs to the user
+    const { data: order, error: orderError } = await supabase.from("orders").select("*").eq("id", orderId).single()
 
     if (orderError || !order) {
-      return NextResponse.json({ success: false, error: "Order not found or not eligible for return" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
-    // Check if order is within return window (2 days)
+    // Check if order is eligible for return (within 48 hours)
     const orderDate = new Date(order.created_at)
     const now = new Date()
     const hoursDiff = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60)
@@ -50,74 +55,76 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Return window has expired. Returns must be initiated within 2 days of delivery.",
+          error: "Return window has expired. Returns must be initiated within 48 hours of delivery.",
         },
         { status: 400 },
       )
     }
 
-    // Create return request
+    // Create return request record
     const { data: returnRequest, error: returnError } = await supabase
-      .from("returns")
+      .from("return_requests")
       .insert({
-        order_id: returnData.orderId,
-        user_id: user.id,
-        customer_name: returnData.customerName,
-        customer_email: returnData.customerEmail,
-        customer_phone: returnData.customerPhone,
-        customer_address: returnData.customerAddress || "",
-        return_reason: returnData.reason,
-        return_items: returnData.items || "",
-        photo_urls: returnData.photoUrls || [],
-        refund_percentage: returnData.refundPercentage || 60,
-        refund_amount: returnData.refundAmount || 0,
+        order_id: orderId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        customer_address: customerAddress,
+        return_reason: reason,
+        items: items,
+        additional_notes: additionalNotes,
+        photo_urls: photoUrls || [],
+        refund_percentage: refundPercentage,
+        expected_refund_amount: refundAmount,
         status: "pending",
+        created_at: new Date().toISOString(),
       })
       .select()
       .single()
 
     if (returnError) {
-      console.error("Return creation error:", returnError)
-      return NextResponse.json({ success: false, error: "Failed to create return request" }, { status: 500 })
+      console.error("Return request creation error:", returnError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to create return request",
+        },
+        { status: 500 },
+      )
     }
 
-    // Send emails (customer confirmation + admin notification)
-    const emailResult = await EmailService.sendReturnRequest({
-      orderId: returnData.orderId,
-      reason: returnData.returnReasonDetails?.label || returnData.reason,
-      items: returnData.items || "",
-      customerName: returnData.customerName,
-      customerEmail: returnData.customerEmail,
-      customerPhone: returnData.customerPhone,
-      customerAddress: returnData.customerAddress || "",
-      refundAmount: returnData.refundAmount || 0,
-      refundPercentage: returnData.refundPercentage || 60,
-      photoUrls: returnData.photoUrls || [],
-    })
+    // Send email notifications
+    try {
+      const emailResult = await EmailService.sendReturnRequest({
+        orderId,
+        reason,
+        items,
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerAddress,
+        refundAmount,
+        refundPercentage,
+        photoUrls,
+      })
 
-    // If this is a damage/defect claim, potentially trigger automatic refund
-    if (returnData.reason === "damaged_shipping" || returnData.reason === "defective_product") {
-      // Here you could integrate with Razorpay to initiate automatic refund
-      // For now, we'll just mark it for admin review
-      await supabase
-        .from("returns")
-        .update({ admin_notes: "High priority - damage/defect claim with photos" })
-        .eq("id", returnRequest.id)
+      console.log("📧 Return request emails sent:", emailResult)
+    } catch (emailError) {
+      console.error("📧 Failed to send return request emails:", emailError)
+      // Don't fail the return request if email fails
     }
 
     return NextResponse.json({
       success: true,
+      returnRequest,
       message: "Return request submitted successfully",
-      returnId: returnRequest.id,
-      emailResult,
     })
   } catch (error: any) {
     console.error("Return request error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to process return request",
-        details: error.message,
+        error: error.message || "Failed to process return request",
       },
       { status: 500 },
     )
