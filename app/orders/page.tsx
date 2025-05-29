@@ -265,7 +265,7 @@ export default function OrdersPage() {
       const response = await fetch(`/api/orders/${orderId}/invoice`)
 
       if (!response.ok) {
-        throw new Error("Failed to generate invoice")
+        throw new Error("Failed to generate invoice, Please Contact SPARSH at rs.sparshnaturals@gmail.com to receive Invoice.")
       }
 
       const blob = await response.blob()

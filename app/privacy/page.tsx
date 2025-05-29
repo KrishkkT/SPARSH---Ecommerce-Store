@@ -65,22 +65,17 @@ export default function PrivacyPage() {
         "You have the right to: access, update, or delete your personal information; opt out of receiving promotional communications; request that we limit our use of your information; withdraw your consent where we rely on consent to process your information.",
     },
     {
-      title: "9. Children's Privacy",
-      content:
-        "Our services are not intended for children under 10 years of age. We do not knowingly collect personal information from children under 10. If we become aware that we have collected personal information from a child under 10, we will take steps to delete such information.",
-    },
-    {
-      title: "10. International Data Transfers",
+      title: "9. International Data Transfers",
       content:
         "Your information may be transferred to and processed in countries other than your own. We will ensure that any such transfers comply with applicable data protection laws and that your information receives adequate protection.",
     },
     {
-      title: "11. Changes to This Privacy Policy",
+      title: "10. Changes to This Privacy Policy",
       content:
         "We may update this privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page and updating the 'Last updated' date. We encourage you to review this policy periodically.",
     },
     {
-      title: "12. Contact Us",
+      title: "11. Contact Us",
       content:
         "If you have any questions about this privacy policy or our privacy practices, please contact us at rs.sparshnaturals@gmail.com or call us at +91 9409073136.",
     },

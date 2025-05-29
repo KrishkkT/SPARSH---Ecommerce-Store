@@ -118,7 +118,7 @@ const products = [
     originalPrice: 749,
     image:
       "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
-    description: "Natural hair dye with organic ingredients",
+    description: "Natural hair dye with organic ingredients comes with 3 different packs for 3 different process.",
     benefits: ["Chemical-free coloring", "Long-lasting", "Hair-friendly"],
     ingredients: ["Henna", "Indigo", "Amla"],
     inStock: true,
