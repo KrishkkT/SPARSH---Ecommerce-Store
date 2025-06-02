@@ -754,7 +754,7 @@ export default function HomePage() {
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p> &copy; 2025 SPARSH Natural Hair Care. All rights reserved. <br />  
-              ✅ Built with 💻 by <a href="https://kjt.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none' }}>KT</a> & Managed by <a href="https://thems.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none' }}>MS</a>
+               Built with ❤️ for your Natural Hair
             </p>
           </div>
 
