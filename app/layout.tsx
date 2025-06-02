@@ -6,49 +6,10 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SPARSH by R Naturals - Premium Natural Hair Care Products",
+  title: "SPARSH by R Naturals - Premium Natural Beauty Products",
   description:
-    "Discover premium natural hair care products crafted with the finest organic ingredients from nature's bounty. Experience the power of Ayurvedic beauty with SPARSH by R Naturals.",
-  keywords:
-    "natural hair care, organic beauty, ayurvedic hair products, chemical-free hair care, natural wellness, SPARSH, R Naturals, hair growth, scalp care, herbal shampoo, natural conditioner",
-  authors: [{ name: "SPARSH by R Naturals" }],
-  creator: "SPARSH by R Naturals",
-  publisher: "SPARSH by R Naturals",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://sparsh-naturals.vercel.app"),
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: "SPARSH by R Naturals - Premium Natural Hair Care Products",
-    description:
-      "Discover premium natural hair care products crafted with the finest organic ingredients from nature's bounty.",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "https://sparsh-naturals.vercel.app",
-    siteName: "SPARSH by R Naturals",
-    locale: "en_IN",
-    type: "website",
-    images: [
-      {
-        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-qDrf7MrviqlCBrwInTkHjfp523Utgw.png",
-        width: 1200,
-        height: 630,
-        alt: "SPARSH by R Naturals Logo",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "SPARSH by R Naturals - Premium Natural Hair Care Products",
-    description:
-      "Discover premium natural hair care products crafted with the finest organic ingredients from nature's bounty.",
-    images: [
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-qDrf7MrviqlCBrwInTkHjfp523Utgw.png",
-    ],
-  },
+    "Discover premium natural skincare and wellness products crafted with the finest organic ingredients from nature's bounty. Experience the power of green beauty with SPARSH.",
+  keywords: "natural skincare, organic beauty, green cosmetics, ayurvedic products, natural wellness",
   icons: {
     icon: [
       {
@@ -86,10 +47,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  generator: "SPARSH by R Naturals",
-  applicationName: "SPARSH Natural Hair Care",
-  referrer: "origin-when-cross-origin",
-  category: "beauty",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -122,53 +80,6 @@ export default function RootLayout({
           href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/apple-touch-icon-LTIf73xzICmdEwRPUCZyKKxvGg1Mjs.png"
         />
         <link rel="manifest" href="/site.webmanifest" />
-
-        {/* Structured data for organization */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "SPARSH by R Naturals",
-              url: process.env.NEXT_PUBLIC_SITE_URL || "https://sparsh-naturals.vercel.app",
-              logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-qDrf7MrviqlCBrwInTkHjfp523Utgw.png",
-              contactPoint: {
-                "@type": "ContactPoint",
-                telephone: "+91-9409073136",
-                contactType: "customer service",
-                email: "rs.sparshnaturals@gmail.com",
-                availableLanguage: ["English", "Hindi", "Gujarati"],
-              },
-              sameAs: ["https://www.facebook.com/sparshnaturals", "https://www.instagram.com/sparshnaturals"],
-              description:
-                "Premium natural hair care products crafted with the finest organic ingredients from nature's bounty.",
-            }),
-          }}
-        />
-
-        {/* Structured data for website */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              url: process.env.NEXT_PUBLIC_SITE_URL || "https://sparsh-naturals.vercel.app",
-              name: "SPARSH by R Naturals",
-              description:
-                "Premium natural hair care products crafted with the finest organic ingredients from nature's bounty.",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: {
-                  "@type": "EntryPoint",
-                  urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || "https://sparsh-naturals.vercel.app"}/search?q={search_term_string}`,
-                },
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
-        />
       </head>
       <body className={inter.className}>{children}</body>
     </html>

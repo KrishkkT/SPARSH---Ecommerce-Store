@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,19 +14,13 @@ import {
   Leaf,
   Shield,
   Hand,
+  Sun,
   Search,
   Menu,
   X,
   CheckCircle,
   AlertCircle,
   CreditCard,
-  Star,
-  MessageCircle,
-  Phone,
-  Mail,
-  MapPin,
-  Award,
-  Sparkles,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { PaymentService } from "@/components/payment-service"
@@ -36,7 +30,7 @@ const products = [
   {
     id: 1,
     name: "Shampoo",
-    price: 309,
+    price: 300,
     originalPrice: 599,
     image:
       "https://images.unsplash.com/photo-1748104313760-d051ffd69541?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OXx8fGVufDB8fHx8fA%3D%3D",
@@ -50,7 +44,7 @@ const products = [
   {
     id: 2,
     name: "Green Mask",
-    price: 309,
+    price: 300,
     originalPrice: 699,
     image:
       "https://images.unsplash.com/photo-1748104313770-356af1cda480?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8M3x8fGVufDB8fHx8fA%3D%3D",
@@ -64,7 +58,7 @@ const products = [
   {
     id: 3,
     name: "Hair Oil",
-    price: 309,
+    price: 300,
     originalPrice: 399,
     image:
       "https://images.unsplash.com/photo-1748104313828-159cbf71e6fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NHx8fGVufDB8fHx8fA%3D%3D",
@@ -78,7 +72,7 @@ const products = [
   {
     id: 4,
     name: "Hair Psoriasis Mask",
-    price: 309,
+    price: 300,
     originalPrice: 649,
     image:
       "https://images.unsplash.com/photo-1748104313769-f4d38e95b9df?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8NXx8fGVufDB8fHx8fA%3D%3D",
@@ -92,7 +86,7 @@ const products = [
   {
     id: 5,
     name: "Back Aloe Vera Gel",
-    price: 269,
+    price: 250,
     originalPrice: 599,
     image:
       "https://images.unsplash.com/photo-1748104313858-e350edbef125?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Mnx8fGVufDB8fHx8fA%3D%3D",
@@ -106,7 +100,7 @@ const products = [
   {
     id: 6,
     name: "Hair Smoothing Mask",
-    price: 269,
+    price: 250,
     originalPrice: 449,
     image:
       "https://images.unsplash.com/photo-1748104313816-29b1f3873451?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8N3x8fGVufDB8fHx8fA%3D%3D",
@@ -120,7 +114,7 @@ const products = [
   {
     id: 7,
     name: "Natural Hair Dye",
-    price: 569,
+    price: 540,
     originalPrice: 749,
     image:
       "https://images.unsplash.com/photo-1748104313975-53931e0743b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8Nnx8fGVufDB8fHx8fA%3D%3D",
@@ -134,7 +128,7 @@ const products = [
   {
     id: 8,
     name: "Aloe Vera Gel",
-    price: 269,
+    price: 250,
     originalPrice: 549,
     image:
       "https://images.unsplash.com/photo-1748104313831-12100b94aba2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8OHx8fGVufDB8fHx8fA%3D%3D",
@@ -148,7 +142,7 @@ const products = [
   {
     id: 9,
     name: "Keratin Mask",
-    price: 269,
+    price: 250,
     originalPrice: 649,
     image:
       "https://images.unsplash.com/photo-1748104313866-aff6443accb0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8MXx8fGVufDB8fHx8fA%3D%3D",
@@ -160,33 +154,6 @@ const products = [
     category: "Mask",
   },
 ]
-
-/*const testimonials = [
-  {
-    name: "Priya Sharma",
-    location: "Mumbai",
-    rating: 5,
-    text: "The hair oil transformed my damaged hair completely. Highly recommended!",
-    product: "Hair Oil",
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    name: "Anita Desai",
-    location: "Bangalore",
-    rating: 5,
-    text: "Best natural products I've ever used. My hair feels so much healthier!",
-    product: "Shampoo",
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    name: "Kavya Patel",
-    location: "Ahmedabad",
-    rating: 5,
-    text: "Amazing results with the keratin mask. My hair is so smooth now!",
-    product: "Keratin Mask",
-    image: "/placeholder.svg?height=60&width=60",
-  },
-]*/
 
 interface CartItem {
   id: number
@@ -201,13 +168,6 @@ interface CheckoutForm {
   email: string
   phone: string
   address: string
-}
-
-interface Notification {
-  id: string
-  type: "success" | "error" | "info"
-  title: string
-  message: string
 }
 
 // Helper function to generate short receipt ID (max 40 chars)
@@ -233,24 +193,8 @@ export default function HomePage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [paymentError, setPaymentError] = useState("")
   const [orderSuccess, setOrderSuccess] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [isLoading, setIsLoading] = useState(false)
 
   const { user, signOut } = useAuth()
-
-  // Add notification function
-  const addNotification = (notification: Omit<Notification, "id">) => {
-    const id = Math.random().toString(36).substring(2, 9)
-    setNotifications((prev) => [...prev, { ...notification, id }])
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id))
-    }, 5000)
-  }
-
-  // Remove notification function
-  const removeNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
-  }
 
   // Filter products based on search and category
   const filteredProducts = products.filter((product) => {
@@ -261,29 +205,13 @@ export default function HomePage() {
     return matchesSearch && matchesCategory
   })
 
-  // Get featured products
-  const featuredProducts = products.filter((product) => product.featured)
-
   // Cart functions
   const addToCart = (product: any) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id)
       if (existingItem) {
-        const updatedCart = prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
-        )
-        addNotification({
-          type: "success",
-          title: "Added to Cart!",
-          message: `${product.name} quantity updated in cart`,
-        })
-        return updatedCart
+        return prevCart.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
       }
-      addNotification({
-        type: "success",
-        title: "Added to Cart!",
-        message: `${product.name} has been added to your cart`,
-      })
       return [
         ...prevCart,
         {
@@ -298,17 +226,7 @@ export default function HomePage() {
   }
 
   const removeFromCart = (productId: number) => {
-    setCart((prevCart) => {
-      const item = prevCart.find((item) => item.id === productId)
-      if (item) {
-        addNotification({
-          type: "info",
-          title: "Removed from Cart",
-          message: `${item.name} has been removed from your cart`,
-        })
-      }
-      return prevCart.filter((item) => item.id !== productId)
-    })
+    setCart((prevCart) => prevCart.filter((item) => item.id !== productId))
   }
 
   const updateQuantity = (productId: number, newQuantity: number) => {
@@ -329,20 +247,9 @@ export default function HomePage() {
 
   // Checkout functions
   const handleCheckout = () => {
-    if (cart.length === 0) {
-      addNotification({
-        type: "error",
-        title: "Cart Empty",
-        message: "Please add some products to your cart before checkout",
-      })
-      return
-    }
+    if (cart.length === 0) return
     if (!user) {
-      addNotification({
-        type: "info",
-        title: "Login Required",
-        message: "Please login to continue with checkout",
-      })
+      // Redirect to login
       window.location.href = "/login"
       return
     }
@@ -358,31 +265,16 @@ export default function HomePage() {
       !checkoutForm.address?.trim()
     ) {
       setPaymentError("Please fill in all required fields")
-      addNotification({
-        type: "error",
-        title: "Form Incomplete",
-        message: "Please fill in all required fields",
-      })
       return
     }
 
     if (!user?.id) {
       setPaymentError("Please log in to continue")
-      addNotification({
-        type: "error",
-        title: "Authentication Required",
-        message: "Please log in to continue with payment",
-      })
       return
     }
 
     if (cart.length === 0) {
       setPaymentError("Your cart is empty")
-      addNotification({
-        type: "error",
-        title: "Cart Empty",
-        message: "Your cart is empty. Please add products before checkout",
-      })
       return
     }
 
@@ -424,8 +316,8 @@ export default function HomePage() {
         itemsCount: orderPayload.orderData.items.length,
       })
 
-      // Create order via API
-      const orderResponse = await fetch("/api/orders/create", {
+      // Create Razorpay order
+      const orderResponse = await fetch("/api/create-razorpay-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -506,108 +398,31 @@ export default function HomePage() {
               setCart([])
               setIsCheckoutOpen(false)
               setCheckoutForm({ name: "", email: "", phone: "", address: "" })
-              addNotification({
-                type: "success",
-                title: "Order Placed Successfully!",
-                message: "Your order has been confirmed and you will receive an email shortly",
-              })
             } else {
               throw new Error(verifyData.error || "Payment verification failed")
             }
           } catch (error: any) {
             console.error("❌ Payment verification error:", error)
             setPaymentError(error.message || "Payment verification failed")
-            addNotification({
-              type: "error",
-              title: "Payment Verification Failed",
-              message: error.message || "Payment verification failed",
-            })
           } finally {
             setIsProcessingPayment(false)
           }
         },
         onError: (error: any) => {
           console.error("❌ Payment error:", error)
-          const errorMessage = error.description || error.error || "Payment failed"
-          setPaymentError(errorMessage)
-          addNotification({
-            type: "error",
-            title: "Payment Failed",
-            message: errorMessage,
-          })
+          setPaymentError(error.description || error.error || "Payment failed")
           setIsProcessingPayment(false)
         },
       })
     } catch (error: any) {
       console.error("❌ Payment process error:", error)
-      const errorMessage = error.message || "Failed to process payment"
-      setPaymentError(errorMessage)
-      addNotification({
-        type: "error",
-        title: "Payment Error",
-        message: errorMessage,
-      })
+      setPaymentError(error.message || "Failed to process payment")
       setIsProcessingPayment(false)
     }
   }
 
-  // Scroll animations
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("animate-fadeInUp")
-        }
-      })
-    }, observerOptions)
-
-    const elements = document.querySelectorAll(".scroll-animate")
-    elements.forEach((el) => observer.observe(el))
-
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 overflow-x-hidden">
-      {/* Notifications */}
-      <div className="fixed top-4 right-4 z-[100] space-y-2">
-        <AnimatePresence>
-          {notifications.map((notification) => (
-            <motion.div
-              key={notification.id}
-              initial={{ opacity: 0, x: 300, scale: 0.3 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 300, scale: 0.5 }}
-              className={`p-4 rounded-xl shadow-lg max-w-sm ${
-                notification.type === "success"
-                  ? "bg-green-500 text-white"
-                  : notification.type === "error"
-                    ? "bg-red-500 text-white"
-                    : "bg-blue-500 text-white"
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-sm">{notification.title}</h4>
-                  <p className="text-xs opacity-90 mt-1">{notification.message}</p>
-                </div>
-                <button
-                  onClick={() => removeNotification(notification.id)}
-                  className="ml-2 opacity-70 hover:opacity-100"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-800 via-emerald-900 to-green-900 text-white backdrop-blur-md shadow-lg border-b border-emerald-200">
         <div className="container mx-auto px-4 py-3">
@@ -620,37 +435,13 @@ export default function HomePage() {
             >
               <img
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
-                alt="SPARSH by R Naturals - Premium Natural Hair Care"
+                alt="SPARSH Logo"
                 className="h-14 w-auto max-w-[160px] object-contain"
               />
             </motion.div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a
-                href="#products"
-                className="text-white hover:text-emerald-200 transition-colors font-medium"
-                onClick={(e) => {
-                  e.preventDefault()
-                  document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
-                }}
-              >
-                Products
-              </a>
-              <a
-                href="#about"
-                className="text-white hover:text-emerald-200 transition-colors font-medium"
-                onClick={(e) => {
-                  e.preventDefault()
-                  document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })
-                }}
-              >
-                About
-              </a>
-              <a href="/contact" className="text-white hover:text-emerald-200 transition-colors font-medium">
-                Contact
-              </a>
-            </nav>
+            <nav className="hidden md:flex items-center space-x-8">{user && <></>}</nav>
 
             <div className="flex items-center space-x-4">
               {/* Cart */}
@@ -658,11 +449,11 @@ export default function HomePage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCartOpen(true)}
-                className="relative text-white hover:bg-emerald-700 transition-all-300 hover-3d"
+                className="relative text-white hover:bg-emerald-700"
               >
                 <ShoppingCart className="w-5 h-5" />
                 {getTotalItems() > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-emerald-400 text-emerald-900 text-xs animate-pulse-slow">
+                  <Badge className="absolute -top-2 -right-2 bg-emerald-600 text-white text-xs">
                     {getTotalItems()}
                   </Badge>
                 )}
@@ -671,21 +462,17 @@ export default function HomePage() {
               {/* User Menu */}
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <span className="hidden md:block text-sm text-emerald-100 font-medium">
+                  <span className="hidden md:block text-sm text-white">
                     Hello, {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
                   </span>
                   <Button
                     variant="ghost"
                     onClick={() => (window.location.href = "/profile")}
-                    className="text-white hover:bg-emerald-700 transition-all-300"
+                    className="text-white hover:bg-emerald-700"
                   >
                     Profile
                   </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={signOut}
-                    className="text-white hover:bg-emerald-700 transition-all-300"
-                  >
+                  <Button variant="ghost" onClick={signOut} className="text-white hover:bg-emerald-700">
                     Logout
                   </Button>
                 </div>
@@ -694,13 +481,13 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     onClick={() => (window.location.href = "/login")}
-                    className="text-white hover:bg-emerald-700 transition-all-300"
+                    className="text-white hover:bg-emerald-700"
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => (window.location.href = "/signup")}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white transition-all-300 btn-press"
+                    className="text-white hover:bg-emerald-700"
                   >
                     Sign Up
                   </Button>
@@ -712,9 +499,8 @@ export default function HomePage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="text-white hover:bg-emerald-700 md:hidden transition-all-300"
+                className="relative text-white hover:bg-emerald-700 md:hidden"
               >
-                <Menu className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -723,164 +509,69 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-emerald-300 rounded-full organic-shape animate-float"></div>
-          <div
-            className="absolute bottom-20 right-10 w-24 h-24 bg-green-300 rounded-full organic-shape-2 animate-float"
-            style={{ animationDelay: "1s" }}
-          ></div>
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
-              <div className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="inline-flex items-center space-x-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium shadow-soft"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>100% Natural Hair Care</span>
-                </motion.div>
-
-                <h1 className="font-heading text-responsive-5xl font-bold leading-tight">
-                  <span className="gradient-text">Transform Your Hair</span>
-                  <br />
-                  <span className="text-gray-800">Naturally</span>
-                </h1>
-
-                <p className="text-responsive-lg text-gray-600 leading-relaxed font-body">
-                  At SPARSH by R Naturals, we handcraft premium hair care products using time-tested natural ingredients
-                  and gentle, home-based methods. Each formula is carefully curated to nourish your scalp, promote
-                  healthy growth, and restore shine—without harsh chemicals.
-                </p>
-              </div>
-
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+              <h1 className="text-5xl lg:text-6xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
+                  Transform Your Hair
+                </span>
+                <br />
+                <span className="text-gray-800">Naturally</span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                At SPARSH by R Naturals, we handcraft premium hair care products using time-tested natural ingredients
+                and gentle, home-based methods. Each formula is carefully curated to nourish your scalp, promote healthy
+                growth, and restore shine—without harsh chemicals. Experience the purity of homemade care with results
+                that speak for themselves.
+              </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
                   onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
-                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl shadow-green hover-3d transition-all-300 btn-press font-semibold"
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl"
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
                   Shop Now
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}
-                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 px-8 py-4 rounded-xl transition-all-300 btn-press font-semibold"
-                >
-                  Learn More
-                </Button>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 pt-8">
-                {[
-                  { number: "500+", label: "Happy Customers" },
-                  { number: "4.8★", label: "Average Rating" },
-                  { number: "100%", label: "Natural" },
-                ].map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="text-center"
-                  >
-                    <div className="text-responsive-2xl font-bold text-emerald-600 font-heading">{stat.number}</div>
-                    <div className="text-responsive-sm text-gray-600 font-body">{stat.label}</div>
-                  </motion.div>
-                ))}
               </div>
             </motion.div>
-
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative"
             >
-              <div className="relative z-10 image-hover">
-                <img
-                  src="https://media.gettyimages.com/id/1151392246/photo/natural-cosmetics-ingredients-for-skincare-body-and-hair-care.jpg?s=612x612&w=0&k=20&c=n9dtIg-dy8rHCQdc_RKqa93lpRsCvBnOlt8fuc0dZ7M="
-                  alt="Natural Hair Care Products - Organic ingredients for healthy hair"
-                  className="w-full h-auto rounded-3xl shadow-strong"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent rounded-3xl transform rotate-3 scale-105 -z-10" />
-              <div className="absolute -top-4 -right-4 w-20 h-20 bg-emerald-200 rounded-full opacity-60 animate-bounce-slow" />
+              <img
+                src="https://media.gettyimages.com/id/1151392246/photo/natural-cosmetics-ingredients-for-skincare-body-and-hair-care.jpg?s=612x612&w=0&k=20&c=n9dtIg-dy8rHCQdc_RKqa93lpRsCvBnOlt8fuc0dZ7M="
+                alt="Natural Hair Care Products"
+                className="w-full h-auto rounded-3xl shadow-2xl"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent rounded-3xl" />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white/50 scroll-animate">
+      <section className="py-16 bg-white/50">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="font-heading text-responsive-3xl font-bold mb-4 gradient-text">Why Choose SPARSH?</h2>
-            <p className="text-responsive-lg text-gray-600 max-w-2xl mx-auto font-body">
-              We're committed to providing the highest quality natural hair care products that deliver real results.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
-              {
-                icon: Leaf,
-                title: "100% Natural",
-                description: "Organic ingredients sourced from nature's finest suppliers",
-                color: "emerald",
-              },
-              {
-                icon: Shield,
-                title: "Chemical-Free",
-                description: "No harmful chemicals, sulfates, or parabens in any product",
-                color: "green",
-              },
-              {
-                icon: Hand,
-                title: "Handmade with Care",
-                description: "Crafted in small batches for premium quality and freshness",
-                color: "teal",
-              },
-              {
-                icon: Award,
-                title: "Proven Results",
-                description: "Trusted by many with visible hair transformation",
-                color: "emerald",
-              },
+              { icon: Leaf, title: "100% Natural", description: "Organic ingredients only" },
+              { icon: Shield, title: "Herbal Products", description: "Safe for all hair types" },
+              { icon: Hand, title: "Handmade with Care", description: "Crafted in small batches for best quality" },
+              { icon: Sun, title: "Natural Glow", description: "Revive your hair with nature's goodness" },
             ].map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center p-6 rounded-2xl glass shadow-soft hover-3d transition-all-300 group"
+                className="text-center p-6 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow"
               >
-                <div
-                  className={`w-16 h-16 bg-gradient-to-br from-${feature.color}-500 to-${feature.color}-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform-300`}
-                >
-                  <feature.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="font-heading text-responsive-lg font-semibold text-gray-800 mb-2">{feature.title}</h3>
-                <p className="text-responsive-sm text-gray-600 font-body">{feature.description}</p>
+                <feature.icon className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -888,16 +579,15 @@ export default function HomePage() {
       </section>
 
       {/* Products Section */}
-      <section id="products" className="py-20 scroll-animate">
+      <section id="products" className="py-20">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="font-heading text-responsive-4xl font-bold mb-4 gradient-text">Our Products</h2>
-            <p className="text-responsive-xl text-gray-600 max-w-2xl mx-auto font-body">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                Our Products
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Discover our range of premium natural hair care products designed to nourish and transform your hair
             </p>
           </motion.div>
@@ -911,7 +601,7 @@ export default function HomePage() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-emerald-200 focus:border-emerald-400 rounded-xl font-body"
+                className="pl-10 border-emerald-200 focus:border-emerald-400"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -920,11 +610,11 @@ export default function HomePage() {
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   onClick={() => setSelectedCategory(category)}
-                  className={`transition-all-300 btn-press font-medium ${
+                  className={
                     selectedCategory === category
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-green"
-                      : "border-emerald-200 hover:bg-emerald-50 text-emerald-700"
-                  }`}
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "border-emerald-200 hover:bg-emerald-50"
+                  }
                 >
                   {category}
                 </Button>
@@ -941,262 +631,79 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: index * 0.1 }}
                   className="group"
                 >
-                  <Card className="h-full glass shadow-soft hover-3d transition-all-300 border-0 rounded-3xl overflow-hidden">
-                    <div className="relative overflow-hidden image-hover">
+                  <Card className="h-full bg-white/95 backdrop-blur-md shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-3xl overflow-hidden">
+                    <div className="relative overflow-hidden">
                       <img
                         src={product.image || "/placeholder.svg"}
-                        alt={`${product.name} - ${product.description}`}
-                        className="w-full h-64 object-contain p-4 transition-transform-300"
+                        alt={product.name}
+                        className="w-full h-64 object-contain group-hover:scale-110 transition-transform duration-500 p-4"
                       />
                       {product.featured && (
-                        <Badge className="absolute top-4 left-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white">
-                          Featured
-                        </Badge>
-                      )}
-                      {product.originalPrice > product.price && (
-                        <Badge className="absolute top-4 right-4 bg-red-500 text-white">
-                          {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                        </Badge>
+                        <Badge className="absolute top-4 left-4 bg-emerald-600 text-white">Featured</Badge>
                       )}
                     </div>
                     <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 font-medium">
-                              {product.category}
-                            </Badge>
-                          </div>
-                          <h3 className="font-heading text-responsive-xl font-semibold text-gray-800 mb-2">
-                            {product.name}
-                          </h3>
-                          <p className="text-responsive-sm text-gray-600 mb-4 line-clamp-2 font-body">
-                            {product.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-heading text-responsive-2xl font-bold text-emerald-600">
-                              ₹{product.price.toLocaleString()}
-                            </span>
-                            {product.originalPrice > product.price && (
-                              <span className="text-responsive-base text-gray-400 line-through font-body">
-                                ₹{product.originalPrice.toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => addToCart(product)}
-                          disabled={!product.inStock}
-                          className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl transition-all-300 btn-press font-semibold"
-                        >
-                          {product.inStock ? (
-                            <>
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              Add to Cart
-                            </>
-                          ) : (
-                            "Out of Stock"
-                          )}
-                        </Button>
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                          {product.category}
+                        </Badge>
                       </div>
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl font-bold text-emerald-600">₹{product.price.toLocaleString()}</span>
+                          <span className="text-lg text-gray-400 line-through">
+                            ₹{product.originalPrice.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => addToCart(product)}
+                        disabled={!product.inStock}
+                        className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl"
+                      >
+                        {product.inStock ? (
+                          <>
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Add to Cart
+                          </>
+                        ) : (
+                          "Out of Stock"
+                        )}
+                      </Button>
                     </CardContent>
                   </Card>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
-
-          {filteredProducts.length === 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="font-heading text-responsive-xl font-semibold text-gray-600 mb-2">No products found</h3>
-              <p className="text-responsive-base text-gray-500 font-body">
-                Try adjusting your search or filter criteria
-              </p>
-            </motion.div>
-          )}
         </div>
       </section>
-
-      {/* About Section */}
-      <section id="about" className="py-20 bg-white/50 scroll-animate">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <div className="space-y-4">
-                <h2 className="font-heading text-responsive-4xl font-bold leading-tight">
-                  Crafted with Love,
-                  <span className="block gradient-text">Inspired by Nature</span>
-                </h2>
-                <p className="text-responsive-lg text-gray-600 leading-relaxed font-body">
-                  At SPARSH, we believe that nature holds the key to beautiful, healthy hair. Our products are carefully
-                  crafted using traditional Ayurvedic recipes and the finest natural ingredients.
-                </p>
-                <p className="text-responsive-lg text-gray-600 leading-relaxed font-body">
-                  Every bottle is a testament to our commitment to purity, quality, and your hair's well-being. We
-                  source our ingredients ethically and ensure that every product is free from harmful chemicals.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                {[
-                  { number: "2+", label: "Years of Research", color: "emerald" },
-                  { number: "15+", label: "Natural Ingredients", color: "green" },
-                ].map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`text-center p-4 bg-${stat.color}-50 rounded-2xl hover-3d transition-all-300`}
-                  >
-                    <div className={`font-heading text-responsive-2xl font-bold text-${stat.color}-600 mb-1`}>
-                      {stat.number}
-                    </div>
-                    <div className="text-responsive-sm text-gray-600 font-body">{stat.label}</div>
-                  </motion.div>
-                ))}
-              </div>
-
-              <Button
-                size="lg"
-                onClick={() => (window.location.href = "/hair-solutions")}
-                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white transition-all-300 btn-press font-semibold"
-              >
-                Learn More About Our Process
-              </Button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="relative z-10 image-hover">
-                <img
-                  src="https://media.gettyimages.com/id/2159339151/photo/set-of-cosmetic-products-made-from-hemp-leaf-extract-face-serum-massage-oil-natural-soap-hair.jpg?s=612x612&w=0&k=20&c=ASa9zLAMV--lI3YeIfh1A3yxCp_CSo6cHqVykJV22gY="
-                  alt="Natural Hair Care Ingredients - Organic botanical extracts"
-                  className="w-full h-auto rounded-3xl shadow-strong"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-green-600/10 rounded-3xl transform -rotate-3 scale-105 -z-10" />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-emerald-600 to-green-600 text-white relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-20 w-40 h-40 bg-white rounded-full organic-shape animate-float"></div>
-          <div
-            className="absolute bottom-10 right-20 w-32 h-32 bg-white rounded-full organic-shape-2 animate-float"
-            style={{ animationDelay: "2s" }}
-          ></div>
-        </div>
-
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto space-y-8"
-          >
-            <h2 className="font-heading text-responsive-4xl font-bold">Ready to Transform Your Hair?</h2>
-            <p className="text-responsive-xl opacity-90 font-body">
-              Join thousands of satisfied customers and experience the power of natural hair care.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
-                className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold transition-all-300 btn-press"
-              >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Shop Now
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => (window.location.href = "/contact")}
-                className="border-white text-white hover:bg-white hover:text-emerald-600 px-8 py-4 text-lg font-semibold transition-all-300 btn-press"
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Get Expert Advice
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Floating Chat Button */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 2 }}
-        className="fixed bottom-6 left-6 z-40"
-      >
-        <Button
-          size="icon"
-          className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-strong animate-pulse-slow hover-3d"
-          onClick={() => (window.location.href = "/contact")}
-        >
-          <MessageCircle className="w-6 h-6" />
-        </Button>
-      </motion.div>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4">
+            <div>
               <img
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
-                alt="SPARSH by R Naturals Logo"
+                alt="SPARSH Logo"
                 className="h-14 w-auto max-w-[160px] object-contain"
               />
-              <p className="text-gray-400 font-body">
-                Transform your hair naturally with our premium organic hair care products crafted with love and care.
+              <p className="text-gray-400 mt-4 mb-4">
+                Transform your hair naturally with our premium organic hair care products.
               </p>
-              <div className="flex space-x-4">
-                <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white transition-colors">
-                  <Phone className="w-5 h-5" />
-                </Button>
-                <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white transition-colors">
-                  <Mail className="w-5 h-5" />
-                </Button>
-                <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white transition-colors">
-                  <MapPin className="w-5 h-5" />
-                </Button>
-              </div>
             </div>
-
             <div>
-              <h3 className="font-heading text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2 font-body">
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
                 <li>
                   <a href="#products" className="text-gray-400 hover:text-white transition-colors">
                     Products
-                  </a>
-                </li>
-                <li>
-                  <a href="#about" className="text-gray-400 hover:text-white transition-colors">
-                    About Us
                   </a>
                 </li>
                 <li>
@@ -1211,18 +718,12 @@ export default function HomePage() {
                 </li>
               </ul>
             </div>
-
             <div>
-              <h3 className="font-heading text-lg font-semibold mb-4">Customer Care</h3>
-              <ul className="space-y-2 font-body">
+              <h3 className="text-lg font-semibold mb-4">Customer Care</h3>
+              <ul className="space-y-2">
                 <li>
                   <a href="/contact" className="text-gray-400 hover:text-white transition-colors">
                     Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="/hair-solutions" className="text-gray-400 hover:text-white transition-colors">
-                    Hair Solutions
                   </a>
                 </li>
                 <li>
@@ -1242,31 +743,21 @@ export default function HomePage() {
                 </li>
               </ul>
             </div>
-
             <div>
-              <h3 className="font-heading text-lg font-semibold mb-4">Contact Info</h3>
-              <div className="space-y-3 text-gray-400 font-body">
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-4 h-4 text-emerald-400" />
-                  <span>+91 9409073136</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-4 h-4 text-emerald-400" />
-                  <span>rs.sparshnaturals@gmail.com</span>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <MapPin className="w-4 h-4 text-emerald-400 mt-1" />
-                  <span>Bhavnagar, Gujarat, India</span>
-                </div>
+              <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
+              <div className="space-y-2 text-gray-400">
+                <p>📞 +91 9409073136</p>
+                <p>📧 rs.sparshnaturals@gmail.com</p>
+                <p>📍 Bhavnagar, Gujarat</p>
               </div>
             </div>
           </div>
-
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center">
-            <p className="text-gray-400 font-body">
-              © 2025 SPARSH Natural Hair Care. All rights reserved. <br /> Made with ❤️ for beautiful hair.
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p> &copy; 2025 SPARSH Natural Hair Care. All rights reserved. <br />  
+              ✅ Built with 💻 by <a href="https://kjt.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none' }}>KT</a> & Managed by <a href="https://thems.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none' }}>MS</a>
             </p>
           </div>
+
         </div>
       </footer>
 
@@ -1287,101 +778,72 @@ export default function HomePage() {
               exit={{ x: "100%" }}
               className="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-2xl"
             >
-              <div className="flex flex-col h-full">
-                <div className="p-6 border-b">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-heading text-2xl font-bold">Shopping Cart</h2>
-                    <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(false)} className="hover-3d">
-                      <X className="w-6 h-6" />
-                    </Button>
-                  </div>
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Shopping Cart</h2>
+                  <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(false)}>
+                    <X className="w-6 h-6" />
+                  </Button>
                 </div>
-
-                <div className="flex-1 overflow-y-auto p-6">
-                  {cart.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <ShoppingCart className="w-12 h-12 text-gray-400" />
-                      </div>
-                      <h3 className="font-heading text-lg font-semibold text-gray-600 mb-2">Your cart is empty</h3>
-                      <p className="text-gray-500 font-body mb-6">Add some products to get started</p>
-                      <Button
-                        onClick={() => {
-                          setIsCartOpen(false)
-                          document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white transition-all-300 btn-press"
-                      >
-                        Continue Shopping
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {cart.map((item) => (
-                        <motion.div
-                          key={item.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center space-x-4 p-4 bg-gray-50 rounded-2xl hover-3d transition-all-300"
-                        >
-                          <img
-                            src={item.image || "/placeholder.svg"}
-                            alt={item.name}
-                            className="w-16 h-16 object-contain rounded-lg"
-                          />
-                          <div className="flex-1">
-                            <h3 className="font-heading font-semibold text-gray-800">{item.name}</h3>
-                            <p className="text-emerald-600 font-bold font-body">₹{item.price.toLocaleString()}</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 hover-3d transition-all-300"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                            <span className="w-8 text-center font-medium font-body">{item.quantity}</span>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 hover-3d transition-all-300"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </Button>
-                          </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {cart.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Your cart is empty</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                        <img
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{item.name}</h3>
+                          <p className="text-emerald-600 font-bold">₹{item.price.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
                           <Button
                             size="icon"
-                            variant="ghost"
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 hover:text-red-700 hover-3d transition-all-300"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="w-8 h-8"
                           >
-                            <X className="w-4 h-4" />
+                            <Minus className="w-4 h-4" />
                           </Button>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {cart.length > 0 && (
-                  <div className="p-6 border-t space-y-4">
-                    <div className="flex items-center justify-between text-xl font-bold">
-                      <span className="font-heading">Total:</span>
-                      <span className="text-emerald-600 font-heading">₹{getTotalPrice().toLocaleString()}</span>
-                    </div>
-                    <Button
-                      onClick={handleCheckout}
-                      className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl transition-all-300 btn-press font-semibold"
-                    >
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Proceed to Checkout
-                    </Button>
+                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="w-8 h-8"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
+              {cart.length > 0 && (
+                <div className="p-6 border-t">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xl font-bold">Total:</span>
+                    <span className="text-2xl font-bold text-emerald-600">₹{getTotalPrice().toLocaleString()}</span>
+                  </div>
+                  <Button
+                    onClick={handleCheckout}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl"
+                  >
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Proceed to Checkout
+                  </Button>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -1407,13 +869,12 @@ export default function HomePage() {
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-heading text-2xl font-bold">Checkout</h2>
-                    <Button variant="ghost" size="icon" onClick={() => setIsCheckoutOpen(false)} className="hover-3d">
+                    <h2 className="text-2xl font-bold">Checkout</h2>
+                    <Button variant="ghost" size="icon" onClick={() => setIsCheckoutOpen(false)}>
                       <X className="w-6 h-6" />
                     </Button>
                   </div>
                 </div>
-
                 <div className="p-6">
                   {paymentError && (
                     <Alert variant="destructive" className="mb-4">
@@ -1421,78 +882,73 @@ export default function HomePage() {
                       <AlertDescription>{paymentError}</AlertDescription>
                     </Alert>
                   )}
-
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-body">Full Name *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                       <Input
                         type="text"
                         value={checkoutForm.name}
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, name: e.target.value })}
-                        className="border-emerald-200 focus:border-emerald-400 font-body"
+                        className="border-emerald-200 focus:border-emerald-400"
                         required
                         placeholder="Enter your full name"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-body">Email *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                       <Input
                         type="email"
                         value={checkoutForm.email}
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
-                        className="border-emerald-200 focus:border-emerald-400 font-body"
+                        className="border-emerald-200 focus:border-emerald-400"
                         required
                         placeholder="Enter your email address"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-body">Phone Number *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
                       <Input
                         type="tel"
                         value={checkoutForm.phone}
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
-                        className="border-emerald-200 focus:border-emerald-400 font-body"
+                        className="border-emerald-200 focus:border-emerald-400"
                         required
                         placeholder="Enter your phone number"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-body">
-                        Shipping Address *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Shipping Address *</label>
                       <textarea
                         value={checkoutForm.address}
                         onChange={(e) => setCheckoutForm({ ...checkoutForm, address: e.target.value })}
-                        className="w-full p-3 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-none font-body"
+                        className="w-full p-3 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-none"
                         rows={3}
                         required
                         placeholder="Enter your complete shipping address"
                       />
                     </div>
                   </div>
-
                   <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                    <h3 className="font-heading font-semibold mb-2">Order Summary</h3>
+                    <h3 className="font-semibold mb-2">Order Summary</h3>
                     {cart.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm mb-1 font-body">
+                      <div key={item.id} className="flex justify-between text-sm mb-1">
                         <span>
-                          {item.name} × {item.quantity}
+                          {item.name} x {item.quantity}
                         </span>
                         <span>₹{(item.price * item.quantity).toLocaleString()}</span>
                       </div>
                     ))}
                     <div className="border-t pt-2 mt-2">
                       <div className="flex justify-between font-bold">
-                        <span className="font-heading">Total:</span>
-                        <span className="text-emerald-600 font-heading">₹{getTotalPrice().toLocaleString()}</span>
+                        <span>Total:</span>
+                        <span className="text-emerald-600">₹{getTotalPrice().toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
-
                   <Button
                     onClick={processPayment}
                     disabled={isProcessingPayment}
-                    className="w-full mt-6 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl transition-all-300 btn-press font-semibold"
+                    className="w-full mt-6 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl"
                   >
                     {isProcessingPayment ? (
                       <>
@@ -1538,8 +994,8 @@ export default function HomePage() {
                 >
                   <CheckCircle className="w-12 h-12 text-green-600" />
                 </motion.div>
-                <h2 className="font-heading text-2xl font-bold text-gray-800 mb-4">Order Successful!</h2>
-                <p className="text-gray-600 mb-6 font-body">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Order Successful!</h2>
+                <p className="text-gray-600 mb-6">
                   Thank you for your purchase. Your order has been confirmed and you will receive an email confirmation
                   shortly.
                 </p>
@@ -1549,7 +1005,7 @@ export default function HomePage() {
                       setOrderSuccess(false)
                       window.location.href = "/orders"
                     }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white transition-all-300 btn-press font-semibold"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     View Orders
                   </Button>
@@ -1559,7 +1015,7 @@ export default function HomePage() {
                       setOrderSuccess(false)
                       document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
                     }}
-                    className="w-full border-emerald-200 hover:bg-emerald-50 transition-all-300 btn-press font-semibold"
+                    className="w-full border-emerald-200 hover:bg-emerald-50"
                   >
                     Continue Shopping
                   </Button>
@@ -1591,14 +1047,15 @@ export default function HomePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Leaf className="w-8 h-8 text-emerald-600" />
-                    <span className="font-heading text-2xl font-bold gradient-text">SPARSH</span>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                      SPARSH
+                    </span>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)} className="hover-3d">
+                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                     <X className="w-6 h-6" />
                   </Button>
                 </div>
               </div>
-
               <div className="p-6">
                 <div className="space-y-4">
                   <div className="relative">
@@ -1608,51 +1065,23 @@ export default function HomePage() {
                       placeholder="Search products..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 border-emerald-200 focus:border-emerald-400 font-body"
+                      className="pl-10 border-emerald-200 focus:border-emerald-400"
                     />
                   </div>
                   <nav className="space-y-2">
-                    <a
-                      href="#products"
-                      className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors font-medium font-body"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setIsMobileMenuOpen(false)
-                        document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
-                      }}
-                    >
+                    <a href="#products" className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors">
                       Products
                     </a>
-                    <a
-                      href="#about"
-                      className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors font-medium font-body"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setIsMobileMenuOpen(false)
-                        document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })
-                      }}
-                    >
-                      About
-                    </a>
-                    <a
-                      href="/contact"
-                      className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors font-medium font-body"
-                    >
+                    <a href="/contact" className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors">
                       Contact
                     </a>
                     {user && (
                       <>
                         <a
                           href="/profile"
-                          className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors font-medium font-body"
+                          className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors"
                         >
                           Profile
-                        </a>
-                        <a
-                          href="/orders"
-                          className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors font-medium font-body"
-                        >
-                          Orders
                         </a>
                       </>
                     )}
@@ -1662,13 +1091,13 @@ export default function HomePage() {
                       <Button
                         variant="outline"
                         onClick={() => (window.location.href = "/login")}
-                        className="w-full border-emerald-200 hover:bg-emerald-50 transition-all-300 btn-press font-semibold"
+                        className="w-full border-emerald-200 hover:bg-emerald-50"
                       >
                         Login
                       </Button>
                       <Button
                         onClick={() => (window.location.href = "/signup")}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white transition-all-300 btn-press font-semibold"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
                         Sign Up
                       </Button>
