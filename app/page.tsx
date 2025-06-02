@@ -21,7 +21,6 @@ import {
   AlertCircle,
   CreditCard,
   Star,
-  Heart,
   MessageCircle,
   Phone,
   Mail,
@@ -47,8 +46,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Hair Care",
-    rating: 4.8,
-    reviews: 124,
   },
   {
     id: 2,
@@ -63,8 +60,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    rating: 4.6,
-    reviews: 89,
   },
   {
     id: 3,
@@ -79,8 +74,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Oil",
-    rating: 4.9,
-    reviews: 156,
   },
   {
     id: 4,
@@ -95,8 +88,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    rating: 4.7,
-    reviews: 73,
   },
   {
     id: 5,
@@ -111,8 +102,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Gel",
-    rating: 4.5,
-    reviews: 92,
   },
   {
     id: 6,
@@ -127,8 +116,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    rating: 4.8,
-    reviews: 67,
   },
   {
     id: 7,
@@ -143,8 +130,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Dye",
-    rating: 4.6,
-    reviews: 45,
   },
   {
     id: 8,
@@ -159,8 +144,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Gel",
-    rating: 4.7,
-    reviews: 83,
   },
   {
     id: 9,
@@ -175,8 +158,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    rating: 4.9,
-    reviews: 112,
   },
 ]
 
@@ -592,7 +573,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 overflow-x-hidden">
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-[100] space-y-2">
         <AnimatePresence>
@@ -988,17 +969,6 @@ export default function HomePage() {
                             <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 font-medium">
                               {product.category}
                             </Badge>
-                            <div className="flex items-center space-x-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-3 h-3 ${
-                                    i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                              <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
-                            </div>
                           </div>
                           <h3 className="font-heading text-responsive-xl font-semibold text-gray-800 mb-2">
                             {product.name}
