@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Sparkles, ArrowRight, Play, Pause } from "lucide-react"
+import { Sparkles, ArrowRight, Play, Pause, Leaf, Star, Heart, Award } from "lucide-react"
 import { ScrollAnimation } from "@/components/scroll-animation"
-import Premium3DProduct from "@/components/premium-3d-product"
 
 const heroImages = [
   {
@@ -15,17 +14,24 @@ const heroImages = [
     subtitle: "Premium Natural Hair Care",
   },
   {
-    url: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1920&auto=format&fit=crop&q=80",
+    url: "https://images.unsplash.com/photo-1497433550656-7fb185be365e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTh8fGhhaXIlMjBjYXJlfGVufDB8fDB8fHww",
     alt: "Natural hair care ingredients",
     title: "Pure Natural Ingredients",
     subtitle: "Handcrafted with Love",
   },
   {
-    url: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&auto=format&fit=crop&q=80",
+    url: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NzF8fGhhaXIlMjBjYXJlfGVufDB8fDB8fHww",
     alt: "Luxurious hair care routine",
     title: "Luxury Hair Care Experience",
     subtitle: "Professional Results at Home",
   },
+]
+
+const floatingElements = [
+  { icon: Leaf, color: "text-emerald-400", delay: 0 },
+  { icon: Star, color: "text-yellow-400", delay: 1 },
+  { icon: Heart, color: "text-pink-400", delay: 2 },
+  { icon: Award, color: "text-blue-400", delay: 3 },
 ]
 
 export default function HeroSection() {
@@ -33,11 +39,11 @@ export default function HeroSection() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
   useEffect(() => {
-    if (!isAutoPlaying) return
+    if (isAutoPlaying) return
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length)
-    }, 5000)
+    }, 4000)
 
     return () => clearInterval(interval)
   }, [isAutoPlaying])
@@ -63,29 +69,30 @@ export default function HeroSection() {
                 backgroundImage: `url(${currentImage.url})`,
               }}
             />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            {/* Enhanced Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-transparent to-green-900/20" />
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Floating Particles */}
+      {/* Enhanced Floating Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-white/30 rounded-full"
+            className="absolute w-2 h-2 bg-white/20 rounded-full"
             animate={{
-              x: [0, Math.random() * 200 - 100],
-              y: [0, Math.random() * -200],
+              x: [0, Math.random() * 300 - 150],
+              y: [0, Math.random() * -300],
               opacity: [0, 1, 0],
-              scale: [0, 1, 0],
+              scale: [0, Math.random() * 1.5 + 0.5, 0],
             }}
             transition={{
-              duration: 8 + Math.random() * 4,
+              duration: 10 + Math.random() * 5,
               repeat: Number.POSITIVE_INFINITY,
-              delay: Math.random() * 5,
+              delay: Math.random() * 8,
               ease: "easeInOut",
             }}
             style={{
@@ -96,10 +103,38 @@ export default function HeroSection() {
         ))}
       </div>
 
+      {/* Floating Icons */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {floatingElements.map((element, i) => (
+          <motion.div
+            key={i}
+            className={`absolute ${element.color}`}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, Math.sin(i) * 20, 0],
+              rotate: [0, 360],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: 8 + i,
+              repeat: Number.POSITIVE_INFINITY,
+              delay: element.delay,
+              ease: "easeInOut",
+            }}
+            style={{
+              left: `${20 + i * 20}%`,
+              top: `${30 + i * 15}%`,
+            }}
+          >
+            <element.icon className="w-8 h-8" />
+          </motion.div>
+        ))}
+      </div>
+
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 h-screen flex items-center">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
-          {/* Text Content */}
+          {/* Enhanced Text Content */}
           <ScrollAnimation direction="left" duration={1}>
             <div className="text-white">
               <motion.div
@@ -109,8 +144,24 @@ export default function HeroSection() {
                 className="mb-6"
               >
                 <motion.span
-                  className="inline-block px-4 py-2 bg-emerald-500/20 backdrop-blur-sm rounded-full text-emerald-300 text-sm font-medium border border-emerald-400/30"
-                  whileHover={{ scale: 1.05, backgroundColor: "rgba(16, 185, 129, 0.3)" }}
+                  className="inline-block px-6 py-3 bg-emerald-500/20 backdrop-blur-sm rounded-full text-emerald-300 text-sm font-medium border border-emerald-400/30"
+                  whileHover={{
+                    scale: 1.05,
+                    backgroundColor: "rgba(16, 185, 129, 0.3)",
+                    borderColor: "rgba(16, 185, 129, 0.5)",
+                  }}
+                  animate={{
+                    boxShadow: [
+                      "0 0 0 0 rgba(16, 185, 129, 0)",
+                      "0 0 0 10px rgba(16, 185, 129, 0.1)",
+                      "0 0 0 0 rgba(16, 185, 129, 0)",
+                    ],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
                 >
                   ✨ Premium Natural Hair Care
                 </motion.span>
@@ -138,7 +189,7 @@ export default function HeroSection() {
                   className="inline-block ml-4"
                   animate={{
                     rotate: [0, 10, -10, 0],
-                    scale: [1, 1.1, 1],
+                    scale: [1, 1.2, 1],
                   }}
                   transition={{
                     duration: 3,
@@ -184,7 +235,13 @@ export default function HeroSection() {
                     onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
                     className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-8 py-4 rounded-xl shadow-2xl hover:shadow-emerald-500/25 transition-all duration-300 group-hover:shadow-2xl"
                   >
-                    <Sparkles className="w-5 h-5 mr-2 group-hover:animate-spin" />
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                      className="mr-2"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                    </motion.div>
                     Discover Products
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -192,7 +249,7 @@ export default function HeroSection() {
 
                 <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="lg"
                     onClick={() => (window.location.href = "/hair-solutions")}
                     className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 rounded-xl transition-all duration-300"
@@ -204,7 +261,7 @@ export default function HeroSection() {
             </div>
           </ScrollAnimation>
 
-          {/* 3D Product Showcase */}
+          {/* Enhanced Visual Elements */}
           <ScrollAnimation direction="right" duration={1} delay={0.3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.8, rotateY: -30 }}
@@ -212,90 +269,121 @@ export default function HeroSection() {
               transition={{ delay: 1.3, duration: 1, ease: "easeOut" }}
               className="relative"
             >
-              <Premium3DProduct
-                scale={1.5}
-                position={[0, -0.5, 0]}
-                backgroundColor="rgba(255, 255, 255, 0.1)"
-                productType="shampoo"
-                productName="SPARSH Premium Collection"
-                showControls={true}
-              />
-
               {/* Floating Info Cards */}
               <motion.div
                 className="absolute -top-4 -left-4 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl"
                 animate={{
-                  y: [0, -10, 0],
-                  rotate: [0, 2, 0],
+                  y: [0, -15, 0],
+                  rotate: [0, 3, 0],
                 }}
                 transition={{
-                  duration: 4,
+                  duration: 5,
                   repeat: Number.POSITIVE_INFINITY,
                   ease: "easeInOut",
                 }}
               >
-                <div className="text-emerald-600 font-bold text-lg">100%</div>
+                <div className="text-emerald-600 font-bold text-2xl">100%</div>
                 <div className="text-gray-600 text-sm">Natural</div>
               </motion.div>
 
               <motion.div
                 className="absolute -bottom-4 -right-4 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl"
                 animate={{
-                  y: [0, 10, 0],
-                  rotate: [0, -2, 0],
+                  y: [0, 15, 0],
+                  rotate: [0, -3, 0],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 4,
                   repeat: Number.POSITIVE_INFINITY,
                   ease: "easeInOut",
                   delay: 1,
                 }}
               >
-                <div className="text-emerald-600 font-bold text-lg">4.9★</div>
+                <div className="text-emerald-600 font-bold text-2xl">4.9★</div>
                 <div className="text-gray-600 text-sm">Rating</div>
+              </motion.div>
+
+              <motion.div
+                className="absolute top-1/2 -right-8 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-xl"
+                animate={{
+                  x: [0, 10, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                  delay: 2,
+                }}
+              >
+                <div className="text-emerald-600 font-bold text-lg">500+</div>
+                <div className="text-gray-600 text-xs">Happy Customers</div>
               </motion.div>
             </motion.div>
           </ScrollAnimation>
         </div>
       </div>
 
-      {/* Image Navigation Dots */}
+      {/* Enhanced Image Navigation 
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
         <div className="flex items-center space-x-4">
           <motion.button
             onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
+            className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isAutoPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
           </motion.button>
 
-          <div className="flex space-x-2">
+          <div className="flex space-x-3">
             {heroImages.map((_, index) => (
               <motion.button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                className={`w-4 h-4 rounded-full transition-all duration-300 ${
                   index === currentImageIndex ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
                 }`}
-                whileHover={{ scale: 1.2 }}
+                whileHover={{ scale: 1.3 }}
                 whileTap={{ scale: 0.9 }}
+                animate={
+                  index === currentImageIndex
+                    ? {
+                        boxShadow: [
+                          "0 0 0 0 rgba(255,255,255,0.7)",
+                          "0 0 0 10px rgba(255,255,255,0)",
+                          "0 0 0 0 rgba(255,255,255,0)",
+                        ],
+                      }
+                    : {}
+                }
+                transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
               />
             ))}
           </div>
         </div>
-      </div>
+      </div>*/}
 
-      {/* Scroll Indicator */}
+      {/* Enhanced Scroll Indicator */}
       <motion.div
         className="absolute bottom-8 right-8 z-20"
-        animate={{ y: [0, 10, 0] }}
+        animate={{ y: [0, 15, 0] }}
         transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
       >
         <div className="flex flex-col items-center text-white/70">
-          <span className="text-sm mb-2 rotate-90 origin-center">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-white/70 to-transparent" />
+          <motion.span
+            className="text-sm mb-3 rotate-90 origin-center"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+          >
+            Scroll
+          </motion.span>
+          <div className="w-px h-16 bg-gradient-to-b from-white/70 to-transparent" />
+          <motion.div
+            className="w-2 h-2 bg-white/70 rounded-full mt-2"
+            animate={{ y: [0, 10, 0], opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
+          />
         </div>
       </motion.div>
     </section>

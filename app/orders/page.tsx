@@ -263,7 +263,14 @@ export default function OrdersPage() {
   const downloadInvoice = async (orderId: string) => {
     try {
       setDownloadingInvoice(orderId)
-      const response = await fetch(`/api/orders/${orderId}/invoice`)
+
+      // Create a more robust download approach
+      const response = await fetch(`/api/orders/${orderId}/invoice`, {
+        method: "GET",
+        headers: {
+          Accept: "application/pdf",
+        },
+      })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -271,16 +278,32 @@ export default function OrdersPage() {
         throw new Error(errorData.error || `Failed to generate invoice (${response.status})`)
       }
 
+      // Get the blob and create download
       const blob = await response.blob()
+
+      // Verify it's actually a PDF
+      if (blob.type !== "application/pdf" && !blob.type.includes("pdf")) {
+        throw new Error("Invalid file type received")
+      }
+
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.style.display = "none"
       a.href = url
       a.download = `SPARSH-Invoice-${orderId.slice(0, 8)}.pdf`
+      a.target = "_blank" // Open in new tab as fallback
+
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      }, 100)
+
+      // Show success message
+      setError("")
 
       // Refresh order data to get updated invoice URL
       await fetchOrders()
@@ -764,6 +787,13 @@ export default function OrdersPage() {
                           </>
                         ) : (
                           <>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Download Invoice
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Invoice...
+                          </>
+                        ) : (
+                          <>\
                             <FileText className="w-4 h-4 mr-2" />
                             Download Invoice
                           </>

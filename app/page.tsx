@@ -46,7 +46,7 @@ const products = [
     benefits: ["Reduces frizz", "Adds shine", "Nourishes scalp"],
     ingredients: ["Argan Oil", "Vitamin E", "Jojoba Oil"],
     inStock: true,
-    featured: true,
+    featured: false,
     category: "Hair Care",
     productType: "shampoo",
     rating: 4.8,
@@ -80,7 +80,7 @@ const products = [
     benefits: ["Cleanses scalp", "Removes buildup", "Promotes growth"],
     ingredients: ["Tea Tree Oil", "Peppermint", "Charcoal"],
     inStock: true,
-    featured: true,
+    featured: false,
     category: "Oil",
     productType: "oil",
     rating: 4.9,
@@ -148,7 +148,7 @@ const products = [
     benefits: ["Chemical-free coloring", "Long-lasting", "Hair-friendly"],
     ingredients: ["Henna", "Indigo", "Amla"],
     inStock: true,
-    featured: true,
+    featured: false,
     category: "Dye",
     productType: "shampoo",
     rating: 4.4,
@@ -553,7 +553,7 @@ export default function HomePage() {
                 },
                 {
                   icon: Shield,
-                  title: "Dermatologically Tested",
+                  title: "Herbal Products",
                   description: "Safe and gentle for all hair types",
                   color: "blue",
                   gradient: "from-blue-400 to-cyan-500",
@@ -586,9 +586,18 @@ export default function HomePage() {
                       <motion.div
                         className={`w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg`}
                         whileHover={{
-                          scale: 1.1,
-                          rotate: [0, -10, 10, 0],
-                          transition: { duration: 0.5 },
+                          scale: 1.2,
+                          rotate: [0, -15, 15, 0],
+                          transition: { duration: 0.6 },
+                        }}
+                        animate={{
+                          y: [0, -5, 0],
+                        }}
+                        transition={{
+                          duration: 3 + index,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: "easeInOut",
+                          delay: index * 0.5,
                         }}
                       >
                         <feature.icon className="w-8 h-8 text-white" />
@@ -674,6 +683,7 @@ export default function HomePage() {
                     exit={{ opacity: 0, y: -30, scale: 0.9 }}
                     transition={{ delay: index * 0.1, duration: 0.6 }}
                     className="group"
+                    whileHover={{ y: -10 }}
                   >
                     <InteractiveCard className="h-full" glowColor="emerald" intensity={0.15}>
                       <div className="bg-white/90 backdrop-blur-md rounded-3xl overflow-hidden shadow-xl border border-white/20 h-full">
@@ -681,8 +691,8 @@ export default function HomePage() {
                           <motion.img
                             src={product.image || "/placeholder.svg"}
                             alt={product.name}
-                            className="w-full h-72 object-cover"
-                            whileHover={{ scale: 1.1 }}
+                            className="w-full h-72 object-contain"
+                            whileHover={{ scale: 0.95 }}
                             transition={{ duration: 0.6 }}
                           />
 
@@ -746,6 +756,18 @@ export default function HomePage() {
                               onClick={() => addToCart(product)}
                               disabled={!product.inStock}
                               className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              animate={
+                                !product.inStock
+                                  ? {}
+                                  : {
+                                      boxShadow: [
+                                        "0 4px 14px 0 rgba(16, 185, 129, 0.2)",
+                                        "0 4px 14px 0 rgba(16, 185, 129, 0.4)",
+                                        "0 4px 14px 0 rgba(16, 185, 129, 0.2)",
+                                      ],
+                                    }
+                              }
+                              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                             >
                               {product.inStock ? (
                                 <>
