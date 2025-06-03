@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -15,29 +16,20 @@ import {
   Hand,
   Sun,
   Search,
+  Menu,
   X,
   CheckCircle,
   AlertCircle,
   CreditCard,
-  Star,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { PaymentService } from "@/components/payment-service"
-import { ScrollAnimation } from "@/components/scroll-animation"
-import { PageTransition } from "@/components/page-transition"
-import { FloatingElements } from "@/components/floating-elements"
-import { InteractiveCard } from "@/components/interactive-card"
-import { MorphingBackground } from "@/components/morphing-background"
-import { LoadingAnimation } from "@/components/loading-animation"
-import HeroSection from "@/components/hero-section"
-import { useCart } from "@/components/cart-context"
-import { useToast } from "@/components/toast-provider"
 
-// Enhanced products array with more details
+// Replace the products array with proper image URLs
 const products = [
   {
     id: 1,
-    name: "Premium Argan Shampoo",
+    name: "Shampoo",
     price: 300,
     originalPrice: 599,
     image:
@@ -48,30 +40,24 @@ const products = [
     inStock: true,
     featured: false,
     category: "Hair Care",
-    productType: "shampoo",
-    rating: 4.8,
-    reviews: 124,
   },
   {
     id: 2,
-    name: "Herbal Green Mask",
+    name: "Green Mask",
     price: 300,
     originalPrice: 699,
     image:
       "https://images.unsplash.com/photo-1748104313770-356af1cda480?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwcm9maWxlLXBhZ2V8M3x8fGVufDB8fHx8fA%3D%3D",
-    description: "Intensive keratin treatment mask for damaged hair",
+    description: "Intensive keratin treatment shampoo for damaged hair",
     benefits: ["Repairs damage", "Strengthens hair", "Reduces breakage"],
     ingredients: ["Keratin", "Biotin", "Coconut Oil"],
     inStock: true,
     featured: false,
     category: "Mask",
-    productType: "mask",
-    rating: 4.6,
-    reviews: 89,
   },
   {
     id: 3,
-    name: "Nourishing Hair Oil",
+    name: "Hair Oil",
     price: 300,
     originalPrice: 399,
     image:
@@ -82,13 +68,10 @@ const products = [
     inStock: true,
     featured: false,
     category: "Oil",
-    productType: "oil",
-    rating: 4.9,
-    reviews: 156,
   },
   {
     id: 4,
-    name: "Therapeutic Scalp Mask",
+    name: "Hair Psoriasis Mask",
     price: 300,
     originalPrice: 649,
     image:
@@ -99,13 +82,10 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    productType: "mask",
-    rating: 4.7,
-    reviews: 73,
   },
   {
     id: 5,
-    name: "Pure Aloe Vera Gel",
+    name: "Back Aloe Vera Gel",
     price: 250,
     originalPrice: 599,
     image:
@@ -116,13 +96,10 @@ const products = [
     inStock: true,
     featured: false,
     category: "Gel",
-    productType: "gel",
-    rating: 4.5,
-    reviews: 92,
   },
   {
     id: 6,
-    name: "Smoothing Hair Mask",
+    name: "Hair Smoothing Mask",
     price: 250,
     originalPrice: 449,
     image:
@@ -133,9 +110,6 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    productType: "mask",
-    rating: 4.8,
-    reviews: 108,
   },
   {
     id: 7,
@@ -150,13 +124,10 @@ const products = [
     inStock: true,
     featured: false,
     category: "Dye",
-    productType: "shampoo",
-    rating: 4.4,
-    reviews: 67,
   },
   {
     id: 8,
-    name: "Healing Aloe Gel",
+    name: "Aloe Vera Gel",
     price: 250,
     originalPrice: 549,
     image:
@@ -167,13 +138,10 @@ const products = [
     inStock: true,
     featured: false,
     category: "Gel",
-    productType: "gel",
-    rating: 4.6,
-    reviews: 134,
   },
   {
     id: 9,
-    name: "Professional Keratin Mask",
+    name: "Keratin Mask",
     price: 250,
     originalPrice: 649,
     image:
@@ -184,11 +152,16 @@ const products = [
     inStock: true,
     featured: false,
     category: "Mask",
-    productType: "mask",
-    rating: 4.9,
-    reviews: 187,
   },
 ]
+
+interface CartItem {
+  id: number
+  name: string
+  price: number
+  quantity: number
+  image: string
+}
 
 interface CheckoutForm {
   name: string
@@ -205,6 +178,9 @@ const generateReceiptId = () => {
 }
 
 export default function HomePage() {
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
@@ -219,9 +195,6 @@ export default function HomePage() {
   const [orderSuccess, setOrderSuccess] = useState(false)
 
   const { user, signOut } = useAuth()
-  const { cart, isCartOpen, setIsCartOpen, addToCart, updateQuantity, getTotalPrice, getTotalItems, clearCart } =
-    useCart()
-  const { addToast } = useToast()
 
   // Filter products based on search and category
   const filteredProducts = products.filter((product) => {
@@ -232,26 +205,52 @@ export default function HomePage() {
     return matchesSearch && matchesCategory
   })
 
-  // Checkout functions
-  const handleCheckout = () => {
-    if (cart.length === 0) {
-      addToast({
-        type: "warning",
-        title: "Cart is Empty",
-        description: "Please add some products to your cart before checkout",
-      })
+  // Cart functions
+  const addToCart = (product: any) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id)
+      if (existingItem) {
+        return prevCart.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
+      }
+      return [
+        ...prevCart,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image: product.image,
+        },
+      ]
+    })
+  }
+
+  const removeFromCart = (productId: number) => {
+    setCart((prevCart) => prevCart.filter((item) => item.id !== productId))
+  }
+
+  const updateQuantity = (productId: number, newQuantity: number) => {
+    if (newQuantity === 0) {
+      removeFromCart(productId)
       return
     }
+    setCart((prevCart) => prevCart.map((item) => (item.id === productId ? { ...item, quantity: newQuantity } : item)))
+  }
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  }
+
+  const getTotalItems = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0)
+  }
+
+  // Checkout functions
+  const handleCheckout = () => {
+    if (cart.length === 0) return
     if (!user) {
-      addToast({
-        type: "info",
-        title: "Login Required",
-        description: "Please log in to continue with checkout",
-        action: {
-          label: "Go to Login",
-          onClick: () => (window.location.href = "/login"),
-        },
-      })
+      // Redirect to login
+      window.location.href = "/login"
       return
     }
     setIsCheckoutOpen(true)
@@ -308,6 +307,15 @@ export default function HomePage() {
         },
       }
 
+      console.log("📦 Order payload:", {
+        amount: orderPayload.amount,
+        currency: orderPayload.currency,
+        receipt: orderPayload.receipt,
+        receiptLength: orderPayload.receipt.length,
+        userId: orderPayload.userId,
+        itemsCount: orderPayload.orderData.items.length,
+      })
+
       // Create Razorpay order
       const orderResponse = await fetch("/api/create-razorpay-order", {
         method: "POST",
@@ -317,6 +325,8 @@ export default function HomePage() {
         },
         body: JSON.stringify(orderPayload),
       })
+
+      console.log("📡 Order response status:", orderResponse.status)
 
       if (!orderResponse.ok) {
         const errorText = await orderResponse.text()
@@ -333,6 +343,7 @@ export default function HomePage() {
       }
 
       const orderData = await orderResponse.json()
+      console.log("✅ Order response data:", orderData)
 
       if (!orderData.success) {
         throw new Error(orderData.details || orderData.error || "Failed to create order")
@@ -342,6 +353,8 @@ export default function HomePage() {
         console.error("❌ Invalid order response:", orderData)
         throw new Error("Invalid order response from server")
       }
+
+      console.log("💳 Initiating Razorpay payment...")
 
       // Initiate Razorpay payment
       await PaymentService.initiatePayment({
@@ -353,6 +366,8 @@ export default function HomePage() {
         customerPhone: checkoutForm.phone.trim(),
         onSuccess: async (response: any) => {
           try {
+            console.log("✅ Payment successful, verifying...")
+
             // Verify payment
             const verifyResponse = await fetch("/api/verify-payment", {
               method: "POST",
@@ -375,19 +390,14 @@ export default function HomePage() {
             }
 
             const verifyData = await verifyResponse.json()
+            console.log("✅ Verification response:", verifyData)
 
             if (verifyData.success) {
+              console.log("🎉 Payment verified successfully")
               setOrderSuccess(true)
-              clearCart()
+              setCart([])
               setIsCheckoutOpen(false)
               setCheckoutForm({ name: "", email: "", phone: "", address: "" })
-
-              addToast({
-                type: "success",
-                title: "Payment Successful!",
-                description: "Your order has been confirmed. Check your email for details.",
-                duration: 6000,
-              })
             } else {
               throw new Error(verifyData.error || "Payment verification failed")
             }
@@ -412,825 +422,693 @@ export default function HomePage() {
   }
 
   return (
-    <PageTransition>
-      <div className="min-h-screen relative">
-        {/* Background Effects */}
-        <MorphingBackground />
-        <FloatingElements />
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-800 via-emerald-900 to-green-900 text-white backdrop-blur-md shadow-lg border-b border-emerald-200">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <motion.div
+              className="flex items-center space-x-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
+                alt="SPARSH Logo"
+                className="h-14 w-auto max-w-[160px] object-contain"
+              />
+            </motion.div>
 
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-800/95 via-emerald-900/95 to-green-900/95 text-white backdrop-blur-md shadow-2xl border-b border-emerald-200/20">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              {/* Logo */}
-              <motion.div
-                className="flex items-center space-x-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                whileHover={{ scale: 1.05 }}
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">{user && <></>}</nav>
+
+            <div className="flex items-center space-x-4">
+              {/* Cart */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCartOpen(true)}
+                className="relative text-white hover:bg-emerald-700"
               >
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
-                  alt="SPARSH Logo"
-                  className="h-14 w-auto max-w-[160px] object-contain"
-                />
-              </motion.div>
+                <ShoppingCart className="w-5 h-5" />
+                {getTotalItems() > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-emerald-600 text-white text-xs">
+                    {getTotalItems()}
+                  </Badge>
+                )}
+              </Button>
 
-              <div className="flex items-center space-x-4">
-                {/* Cart */}
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              {/* User Menu */}
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <span className="hidden md:block text-sm text-white">
+                    Hello, {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
+                  </span>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    onClick={() => setIsCartOpen(true)}
-                    className="relative text-white hover:bg-emerald-700/50 transition-all duration-300 backdrop-blur-sm"
+                    onClick={() => (window.location.href = "/profile")}
+                    className="text-white hover:bg-emerald-700"
                   >
-                    <motion.div
-                      animate={getTotalItems() > 0 ? { scale: [1, 1.2, 1] } : {}}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <ShoppingCart className="w-5 h-5" />
-                    </motion.div>
-                    <AnimatePresence>
-                      {getTotalItems() > 0 && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0, opacity: 0 }}
-                          className="absolute -top-2 -right-2"
-                        >
-                          <Badge className="bg-emerald-600 text-white text-xs animate-pulse shadow-lg min-w-[20px] h-5 flex items-center justify-center">
-                            {getTotalItems()}
-                          </Badge>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    Profile
                   </Button>
-                </motion.div>
+                  <Button variant="ghost" onClick={signOut} className="text-white hover:bg-emerald-700">
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <div className="hidden md:flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => (window.location.href = "/login")}
+                    className="text-white hover:bg-emerald-700"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    onClick={() => (window.location.href = "/signup")}
+                    className="text-white hover:bg-emerald-700"
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              )}
 
-                {/* User Menu */}
-                {user ? (
-                  <div className="flex items-center space-x-2">
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="hidden md:block text-sm text-white/90"
-                    >
-                      Hello, {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
-                    </motion.span>
-                    <Button
-                      variant="ghost"
-                      onClick={() => (window.location.href = "/profile")}
-                      className="text-white hover:bg-emerald-700/50 transition-all duration-300"
-                    >
-                      Profile
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={signOut}
-                      className="text-white hover:bg-emerald-700/50 transition-all duration-300"
-                    >
-                      Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="hidden md:flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      onClick={() => (window.location.href = "/login")}
-                      className="text-white hover:bg-emerald-700/50 transition-all duration-300"
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      onClick={() => (window.location.href = "/signup")}
-                      className="text-white hover:bg-emerald-700/50 transition-all duration-300"
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
-                )}
-              </div>
+              {/* Mobile Menu Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="relative text-white hover:bg-emerald-700 md:hidden"
+              >
+              </Button>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Hero Section */}
-        <HeroSection />
-
-        {/* Features Section */}
-        <section className="py-20 relative">
-          <div className="container mx-auto px-4">
-            <ScrollAnimation direction="up" className="text-center mb-16">
-              <motion.h2
-                className="text-4xl font-bold mb-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                  Why Choose SPARSH?
+      {/* Hero Section */}
+      <section className="relative py-20 overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+              <h1 className="text-5xl lg:text-6xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
+                  Transform Your Hair
                 </span>
-              </motion.h2>
-              <motion.p
-                className="text-xl text-gray-600 max-w-3xl mx-auto"
+                <br />
+                <span className="text-gray-800">Naturally</span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                At SPARSH by R Naturals, we handcraft premium hair care products using time-tested natural ingredients
+                and gentle, home-based methods. Each formula is carefully curated to nourish your scalp, promote healthy
+                growth, and restore shine—without harsh chemicals. Experience the purity of homemade care with results
+                that speak for themselves.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  size="lg"
+                  onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl"
+                >
+                  Shop Now
+                </Button>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative"
+            >
+              <img
+                src="https://media.gettyimages.com/id/1151392246/photo/natural-cosmetics-ingredients-for-skincare-body-and-hair-care.jpg?s=612x612&w=0&k=20&c=n9dtIg-dy8rHCQdc_RKqa93lpRsCvBnOlt8fuc0dZ7M="
+                alt="Natural Hair Care Products"
+                className="w-full h-auto rounded-3xl shadow-2xl"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent rounded-3xl" />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-white/50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              { icon: Leaf, title: "100% Natural", description: "Organic ingredients only" },
+              { icon: Shield, title: "Herbal Products", description: "Safe for all hair types" },
+              { icon: Hand, title: "Handmade with Care", description: "Crafted in small batches for best quality" },
+              { icon: Sun, title: "Natural Glow", description: "Revive your hair with nature's goodness" },
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: index * 0.1 }}
+                className="text-center p-6 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow"
               >
-                Experience the difference of premium natural hair care with our scientifically-backed, nature-inspired
-                formulations
-              </motion.p>
-            </ScrollAnimation>
+                <feature.icon className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                {
-                  icon: Leaf,
-                  title: "100% Natural",
-                  description: "Organic ingredients sourced from nature's finest",
-                  color: "emerald",
-                  gradient: "from-emerald-400 to-green-500",
-                },
-                {
-                  icon: Shield,
-                  title: "Herbal Products",
-                  description: "Safe and gentle for all hair types",
-                  color: "blue",
-                  gradient: "from-blue-400 to-cyan-500",
-                },
-                {
-                  icon: Hand,
-                  title: "Handcrafted Excellence",
-                  description: "Small-batch production for premium quality",
-                  color: "purple",
-                  gradient: "from-purple-400 to-pink-500",
-                },
-                {
-                  icon: Sun,
-                  title: "Radiant Results",
-                  description: "Visible transformation in just weeks",
-                  color: "yellow",
-                  gradient: "from-yellow-400 to-orange-500",
-                },
-              ].map((feature, index) => (
-                <ScrollAnimation
-                  key={index}
-                  direction={index % 2 === 0 ? "up" : "down"}
-                  threshold={0.1}
-                  duration={0.6}
-                  delay={index * 0.1}
-                  className="h-full"
+      {/* Products Section */}
+      <section id="products" className="py-20">
+        <div className="container mx-auto px-4">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                Our Products
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Discover our range of premium natural hair care products designed to nourish and transform your hair
+            </p>
+          </motion.div>
+
+          {/* Search and Filter */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 border-emerald-200 focus:border-emerald-400"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {["All", "Hair Care", "Oil", "Gel", "Mask", "Dye"].map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  onClick={() => setSelectedCategory(category)}
+                  className={
+                    selectedCategory === category
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "border-emerald-200 hover:bg-emerald-50"
+                  }
                 >
-                  <InteractiveCard className="h-full" glowColor={feature.color} intensity={0.2}>
-                    <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 text-center h-full border border-white/20 shadow-xl">
-                      <motion.div
-                        className={`w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg`}
-                        whileHover={{
-                          scale: 1.2,
-                          rotate: [0, -15, 15, 0],
-                          transition: { duration: 0.6 },
-                        }}
-                        animate={{
-                          y: [0, -5, 0],
-                        }}
-                        transition={{
-                          duration: 3 + index,
-                          repeat: Number.POSITIVE_INFINITY,
-                          ease: "easeInOut",
-                          delay: index * 0.5,
-                        }}
-                      >
-                        <feature.icon className="w-8 h-8 text-white" />
-                      </motion.div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-3">{feature.title}</h3>
-                      <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                    </div>
-                  </InteractiveCard>
-                </ScrollAnimation>
+                  {category}
+                </Button>
               ))}
             </div>
           </div>
-        </section>
 
-        {/* Products Section */}
-        <section id="products" className="py-20 relative">
-          <div className="container mx-auto px-4">
-            <ScrollAnimation direction="up" className="text-center mb-16">
-              <motion.h2
-                className="text-5xl font-bold mb-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
-                  Our Premium Collection
-                </span>
-              </motion.h2>
-              <motion.p
-                className="text-xl text-gray-600 max-w-3xl mx-auto"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                Discover our scientifically-formulated range of premium natural hair care products, each designed to
-                address specific hair concerns with visible results
-              </motion.p>
-            </ScrollAnimation>
-
-            {/* Search and Filter */}
-            <motion.div
-              className="flex flex-col md:flex-row gap-6 mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Search for your perfect hair solution..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 py-4 border-emerald-200 focus:border-emerald-400 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg text-lg"
-                />
-              </div>
-              <div className="flex gap-3 flex-wrap">
-                {["All", "Hair Care", "Oil", "Gel", "Mask", "Dye"].map((category) => (
-                  <motion.div key={category} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant={selectedCategory === category ? "default" : "outline"}
-                      onClick={() => setSelectedCategory(category)}
-                      className={
-                        selectedCategory === category
-                          ? "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl px-6 py-3 shadow-lg"
-                          : "border-emerald-200 hover:bg-emerald-50 rounded-2xl px-6 py-3 bg-white/80 backdrop-blur-sm"
-                      }
-                    >
-                      {category}
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <AnimatePresence>
-                {filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -30, scale: 0.9 }}
-                    transition={{ delay: index * 0.1, duration: 0.6 }}
-                    className="group"
-                    whileHover={{ y: -10 }}
-                  >
-                    <InteractiveCard className="h-full" glowColor="emerald" intensity={0.15}>
-                      <div className="bg-white/90 backdrop-blur-md rounded-3xl overflow-hidden shadow-xl border border-white/20 h-full">
-                        <div className="relative overflow-hidden">
-                          <motion.img
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.name}
-                            className="w-full h-72 object-contain"
-                            whileHover={{ scale: 0.85 }}
-                            transition={{ duration: 0.6 }}
-                          />
-
-                          {/* Overlay gradient */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                          <AnimatePresence>
-                            {product.featured && (
-                              <motion.div
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                className="absolute top-4 left-4"
-                              >
-                                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg px-3 py-1">
-                                  <Star className="w-3 h-3 mr-1" />
-                                  Featured
-                                </Badge>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        <div className="p-6">
-                          <div className="flex items-center justify-between mb-3">
-                            <Badge
-                              variant="secondary"
-                              className="bg-emerald-100 text-emerald-700 rounded-full px-3 py-1"
-                            >
-                              {product.category}
-                            </Badge>
-                            <div className="flex items-center space-x-1">
-                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                              <span className="text-sm font-medium text-gray-700">{product.rating}</span>
-                              <span className="text-xs text-gray-500">({product.reviews})</span>
-                            </div>
-                          </div>
-
-                          <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-emerald-600 transition-colors">
-                            {product.name}
-                          </h3>
-
-                          <p className="text-gray-600 mb-4 line-clamp-2 leading-relaxed">{product.description}</p>
-
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-2xl font-bold text-emerald-600">
-                                ₹{product.price.toLocaleString()}
-                              </span>
-                              <span className="text-lg text-gray-400 line-through">
-                                ₹{product.originalPrice.toLocaleString()}
-                              </span>
-                              <Badge className="bg-red-100 text-red-600 text-xs px-2 py-1">
-                                {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-                                OFF
-                              </Badge>
-                            </div>
-                          </div>
-
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button
-                              onClick={() => addToCart(product)}
-                              disabled={!product.inStock}
-                              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                              animate={
-                                !product.inStock
-                                  ? {}
-                                  : {
-                                      boxShadow: [
-                                        "0 4px 14px 0 rgba(16, 185, 129, 0.2)",
-                                        "0 4px 14px 0 rgba(16, 185, 129, 0.4)",
-                                        "0 4px 14px 0 rgba(16, 185, 129, 0.2)",
-                                      ],
-                                    }
-                              }
-                              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                            >
-                              {product.inStock ? (
-                                <>
-                                  <ShoppingCart className="w-5 h-5 mr-2" />
-                                  Add to Cart
-                                </>
-                              ) : (
-                                "Out of Stock"
-                              )}
-                            </Button>
-                          </motion.div>
+          {/* Products Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <AnimatePresence>
+              {filteredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group"
+                >
+                  <Card className="h-full bg-white/95 backdrop-blur-md shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-3xl overflow-hidden">
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={product.image || "/placeholder.svg"}
+                        alt={product.name}
+                        className="w-full h-64 object-contain group-hover:scale-110 transition-transform duration-500 p-4"
+                      />
+                      {product.featured && (
+                        <Badge className="absolute top-4 left-4 bg-emerald-600 text-white">Featured</Badge>
+                      )}
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                          {product.category}
+                        </Badge>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl font-bold text-emerald-600">₹{product.price.toLocaleString()}</span>
+                          <span className="text-lg text-gray-400 line-through">
+                            ₹{product.originalPrice.toLocaleString()}
+                          </span>
                         </div>
                       </div>
-                    </InteractiveCard>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                      <Button
+                        onClick={() => addToCart(product)}
+                        disabled={!product.inStock}
+                        className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl"
+                      >
+                        {product.inStock ? (
+                          <>
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Add to Cart
+                          </>
+                        ) : (
+                          "Out of Stock"
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
+                alt="SPARSH Logo"
+                className="h-14 w-auto max-w-[160px] object-contain"
+              />
+              <p className="text-gray-400 mt-4 mb-4">
+                Transform your hair naturally with our premium organic hair care products.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#products" className="text-gray-400 hover:text-white transition-colors">
+                    Products
+                  </a>
+                </li>
+                <li>
+                  <a href="/contact" className="text-gray-400 hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href="/returns" className="text-gray-400 hover:text-white transition-colors">
+                    Returns
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Customer Care</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="/contact" className="text-gray-400 hover:text-white transition-colors">
+                    Contact Us
+                  </a>
+                </li>
+                <li>
+                  <a href="/returns" className="text-gray-400 hover:text-white transition-colors">
+                    Returns & Exchanges
+                  </a>
+                </li>
+                <li>
+                  <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms" className="text-gray-400 hover:text-white transition-colors">
+                    Terms & Conditions
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
+              <div className="space-y-2 text-gray-400">
+                <p>📞 +91 9409073136</p>
+                <p>📧 rs.sparshnaturals@gmail.com</p>
+                <p>📍 Bhavnagar, Gujarat</p>
+              </div>
             </div>
           </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-emerald-900 text-white py-20 relative overflow-hidden">
-          {/* Footer background effects */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-500 rounded-full blur-3xl" />
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p> &copy; 2025 SPARSH Natural Hair Care. All rights reserved. <br />  
+               Built with ❤️ for your Natural Hair
+            </p>
           </div>
 
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-05-25%20153324.jpg-S8ULBXQxRku2nldAM9Q4PiLEhjr55f.png"
-                  alt="SPARSH Logo"
-                  className="h-16 w-auto max-w-[180px] object-contain mb-6"
-                />
-                <p className="text-gray-300 mb-6 leading-relaxed">
-                  Transform your hair naturally with our premium organic hair care products, crafted with love and
-                  backed by science.
-                </p>
-              </motion.div>
+        </div>
+      </footer>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <h3 className="text-xl font-bold mb-6 text-emerald-400">Quick Links</h3>
-                <ul className="space-y-3">
-                  {["Products", "Hair Solutions", "Contact", "Returns"].map((link, index) => (
-                    <motion.li key={link} whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
-                      <a
-                        href={`/${link.toLowerCase().replace(" ", "-")}`}
-                        className="text-gray-300 hover:text-emerald-400 transition-colors duration-300 flex items-center"
-                      >
-                        <span className="w-2 h-2 bg-emerald-400 rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {link}
-                      </a>
-                    </motion.li>
-                  ))}
-                </ul>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <h3 className="text-xl font-bold mb-6 text-emerald-400">Customer Care</h3>
-                <ul className="space-y-3">
-                  {["Contact Us", "Returns & Exchanges", "Privacy Policy", "Terms & Conditions"].map((link) => (
-                    <motion.li key={link} whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
-                      <a
-                        href={`/${link.toLowerCase().replace(/\s+/g, "-").replace("&", "")}`}
-                        className="text-gray-300 hover:text-emerald-400 transition-colors duration-300"
-                      >
-                        {link}
-                      </a>
-                    </motion.li>
-                  ))}
-                </ul>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                <h3 className="text-xl font-bold mb-6 text-emerald-400">Get in Touch</h3>
-                <div className="space-y-4 text-gray-300">
-                  <motion.div className="flex items-center" whileHover={{ scale: 1.05 }}>
-                    <span className="text-2xl mr-3">📞</span>
-                    <span>+91 9409073136</span>
-                  </motion.div>
-                  <motion.div className="flex items-center" whileHover={{ scale: 1.05 }}>
-                    <span className="text-2xl mr-3">📧</span>
-                    <span>rs.sparshnaturals@gmail.com</span>
-                  </motion.div>
-                  <motion.div className="flex items-center" whileHover={{ scale: 1.05 }}>
-                    <span className="text-2xl mr-3">📍</span>
-                    <span>Bhavnagar, Gujarat</span>
-                  </motion.div>
-                </div>
-              </motion.div>
-            </div>
-
+      {/* Cart Sidebar */}
+      <AnimatePresence>
+        {isCartOpen && (
+          <>
             <motion.div
-              className="border-t border-gray-700 mt-12 pt-8 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setIsCartOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              className="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-2xl"
             >
-              <p className="text-gray-400 text-lg">
-                &copy; 2025 SPARSH Natural Hair Care. All rights reserved. <br />
-                <span className="text-emerald-400">Built with ❤️ for your Natural Hair Journey 🌿</span>
-              </p>
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Shopping Cart</h2>
+                  <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(false)}>
+                    <X className="w-6 h-6" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {cart.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Your cart is empty</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                        <img
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{item.name}</h3>
+                          <p className="text-emerald-600 font-bold">₹{item.price.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="w-8 h-8"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="w-8 h-8"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {cart.length > 0 && (
+                <div className="p-6 border-t">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xl font-bold">Total:</span>
+                    <span className="text-2xl font-bold text-emerald-600">₹{getTotalPrice().toLocaleString()}</span>
+                  </div>
+                  <Button
+                    onClick={handleCheckout}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl"
+                  >
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Proceed to Checkout
+                  </Button>
+                </div>
+              )}
             </motion.div>
-          </div>
-        </footer>
+          </>
+        )}
+      </AnimatePresence>
 
-        {/* Enhanced Cart Sidebar */}
-        <AnimatePresence>
-          {isCartOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-                onClick={() => setIsCartOpen(false)}
-              />
-              <motion.div
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed right-0 top-0 h-full w-full max-w-md bg-white/95 backdrop-blur-md z-50 shadow-2xl"
-              >
-                <div className="p-6 border-b bg-gradient-to-r from-emerald-50 to-green-50">
+      {/* Checkout Modal */}
+      <AnimatePresence>
+        {isCheckoutOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setIsCheckoutOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-emerald-800">Shopping Cart</h2>
-                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                      <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(false)}>
-                        <X className="w-6 h-6" />
-                      </Button>
-                    </motion.div>
+                    <h2 className="text-2xl font-bold">Checkout</h2>
+                    <Button variant="ghost" size="icon" onClick={() => setIsCheckoutOpen(false)}>
+                      <X className="w-6 h-6" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 max-h-[calc(100vh-200px)]">
-                  {cart.length === 0 ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center py-12"
-                    >
-                      <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 text-lg">Your cart is empty</p>
-                      <p className="text-gray-400 text-sm mt-2">Add some products to get started!</p>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-4">
-                      <AnimatePresence>
-                        {cart.map((item, index) => (
-                          <motion.div
-                            key={item.id}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl border border-emerald-100 shadow-sm"
-                          >
-                            <img
-                              src={item.image || "/placeholder.svg"}
-                              alt={item.name}
-                              className="w-16 h-16 object-cover rounded-xl"
-                            />
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                              <p className="text-emerald-600 font-bold">₹{item.price.toLocaleString()}</p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="w-8 h-8 border-emerald-200 hover:bg-emerald-50 rounded-lg"
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </Button>
-                              </motion.div>
-                              <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="w-8 h-8 border-emerald-200 hover:bg-emerald-50 rounded-lg"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </Button>
-                              </motion.div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                <div className="p-6">
+                  {paymentError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{paymentError}</AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                      <Input
+                        type="text"
+                        value={checkoutForm.name}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, name: e.target.value })}
+                        className="border-emerald-200 focus:border-emerald-400"
+                        required
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                      <Input
+                        type="email"
+                        value={checkoutForm.email}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
+                        className="border-emerald-200 focus:border-emerald-400"
+                        required
+                        placeholder="Enter your email address"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                      <Input
+                        type="tel"
+                        value={checkoutForm.phone}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
+                        className="border-emerald-200 focus:border-emerald-400"
+                        required
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Shipping Address *</label>
+                      <textarea
+                        value={checkoutForm.address}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, address: e.target.value })}
+                        className="w-full p-3 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-none"
+                        rows={3}
+                        required
+                        placeholder="Enter your complete shipping address"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                    <h3 className="font-semibold mb-2">Order Summary</h3>
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm mb-1">
+                        <span>
+                          {item.name} x {item.quantity}
+                        </span>
+                        <span>₹{(item.price * item.quantity).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between font-bold">
+                        <span>Total:</span>
+                        <span className="text-emerald-600">₹{getTotalPrice().toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={processPayment}
+                    disabled={isProcessingPayment}
+                    className="w-full mt-6 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl"
+                  >
+                    {isProcessingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        Pay with Razorpay
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {orderSuccess && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                >
+                  <CheckCircle className="w-12 h-12 text-green-600" />
+                </motion.div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Order Successful!</h2>
+                <p className="text-gray-600 mb-6">
+                  Thank you for your purchase. Your order has been confirmed and you will receive an email confirmation
+                  shortly.
+                </p>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => {
+                      setOrderSuccess(false)
+                      window.location.href = "/orders"
+                    }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    View Orders
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setOrderSuccess(false)
+                      document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
+                    }}
+                    className="w-full border-emerald-200 hover:bg-emerald-50"
+                  >
+                    Continue Shopping
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              className="fixed left-0 top-0 h-full w-80 bg-white z-50 shadow-2xl md:hidden"
+            >
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Leaf className="w-8 h-8 text-emerald-600" />
+                    <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                      SPARSH
+                    </span>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+                    <X className="w-6 h-6" />
+                  </Button>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 border-emerald-200 focus:border-emerald-400"
+                    />
+                  </div>
+                  <nav className="space-y-2">
+                    <a href="#products" className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors">
+                      Products
+                    </a>
+                    <a href="/contact" className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors">
+                      Contact
+                    </a>
+                    {user && (
+                      <>
+                        <a
+                          href="/profile"
+                          className="block py-2 text-gray-700 hover:text-emerald-600 transition-colors"
+                        >
+                          Profile
+                        </a>
+                      </>
+                    )}
+                  </nav>
+                  {!user && (
+                    <div className="space-y-2 pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={() => (window.location.href = "/login")}
+                        className="w-full border-emerald-200 hover:bg-emerald-50"
+                      >
+                        Login
+                      </Button>
+                      <Button
+                        onClick={() => (window.location.href = "/signup")}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        Sign Up
+                      </Button>
                     </div>
                   )}
                 </div>
-                {cart.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 border-t bg-gradient-to-r from-emerald-50 to-green-50"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xl font-bold text-gray-800">Total:</span>
-                      <span className="text-2xl font-bold text-emerald-600">₹{getTotalPrice().toLocaleString()}</span>
-                    </div>
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        onClick={handleCheckout}
-                        className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        Proceed to Checkout
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* Enhanced Checkout Modal - Centered and Positioned Higher */}
-        <AnimatePresence>
-          {isCheckoutOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-                onClick={() => setIsCheckoutOpen(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 50 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 overflow-y-auto"
-              >
-                <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-md border border-white/20 my-8">
-                  <div className="p-6 border-b bg-gradient-to-r from-emerald-50 to-green-50 rounded-t-3xl">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-emerald-800">Secure Checkout</h2>
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                        <Button variant="ghost" size="icon" onClick={() => setIsCheckoutOpen(false)}>
-                          <X className="w-6 h-6" />
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <AnimatePresence>
-                      {paymentError && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                        >
-                          <Alert variant="destructive" className="mb-4 rounded-xl">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>{paymentError}</AlertDescription>
-                          </Alert>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    <div className="space-y-4">
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 }}
-                      >
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                        <Input
-                          type="text"
-                          value={checkoutForm.name}
-                          onChange={(e) => setCheckoutForm({ ...checkoutForm, name: e.target.value })}
-                          className="border-emerald-200 focus:border-emerald-400 rounded-xl py-3"
-                          required
-                          placeholder="Enter your full name"
-                        />
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                        <Input
-                          type="email"
-                          value={checkoutForm.email}
-                          onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
-                          className="border-emerald-200 focus:border-emerald-400 rounded-xl py-3"
-                          required
-                          placeholder="Enter your email address"
-                        />
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                        <Input
-                          type="tel"
-                          value={checkoutForm.phone}
-                          onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
-                          className="border-emerald-200 focus:border-emerald-400 rounded-xl py-3"
-                          required
-                          placeholder="Enter your phone number"
-                        />
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 }}
-                      >
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Shipping Address *</label>
-                        <textarea
-                          value={checkoutForm.address}
-                          onChange={(e) => setCheckoutForm({ ...checkoutForm, address: e.target.value })}
-                          className="w-full p-3 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-none"
-                          rows={3}
-                          required
-                          placeholder="Enter your complete shipping address"
-                        />
-                      </motion.div>
-                    </div>
-                    <motion.div
-                      className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl border border-emerald-100"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <h3 className="font-semibold mb-2 text-emerald-800">Order Summary</h3>
-                      {cart.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm mb-1">
-                          <span>
-                            {item.name} x {item.quantity}
-                          </span>
-                          <span>₹{(item.price * item.quantity).toLocaleString()}</span>
-                        </div>
-                      ))}
-                      <div className="border-t border-emerald-200 pt-2 mt-2">
-                        <div className="flex justify-between font-bold">
-                          <span>Total:</span>
-                          <span className="text-emerald-600">₹{getTotalPrice().toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button
-                        onClick={processPayment}
-                        disabled={isProcessingPayment}
-                        className="w-full mt-6 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        {isProcessingPayment ? (
-                          <div className="flex items-center justify-center">
-                            <LoadingAnimation size="sm" color="white" />
-                            <span className="ml-2">Processing Payment...</span>
-                          </div>
-                        ) : (
-                          <>
-                            <CreditCard className="w-5 h-5 mr-2" />
-                            Pay Securely with Razorpay
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* Enhanced Success Modal */}
-        <AnimatePresence>
-          {orderSuccess && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8, y: 50 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              >
-                <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-md p-8 text-center border border-white/20">
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.2, type: "spring", damping: 15 }}
-                    className="w-20 h-20 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
-                  >
-                    <CheckCircle className="w-12 h-12 text-white" />
-                  </motion.div>
-                  <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-3xl font-bold text-gray-800 mb-4"
-                  >
-                    Order Successful! 🎉
-                  </motion.h2>
-                  <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-gray-600 mb-6 leading-relaxed"
-                  >
-                    Thank you for choosing SPARSH! Your order has been confirmed and you will receive an email
-                    confirmation with your invoice and tracking details shortly.
-                  </motion.p>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="space-y-3"
-                  >
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        onClick={() => {
-                          setOrderSuccess(false)
-                          window.location.href = "/orders"
-                        }}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl py-3"
-                      >
-                        View My Orders
-                      </Button>
-                    </motion.div>
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setOrderSuccess(false)
-                          document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })
-                        }}
-                        className="w-full border-emerald-200 hover:bg-emerald-50 rounded-2xl py-3"
-                      >
-                        Continue Shopping
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </div>
-    </PageTransition>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }

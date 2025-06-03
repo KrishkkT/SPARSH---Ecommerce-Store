@@ -42,45 +42,60 @@ export async function GET(request: NextRequest, { params }: { params: { orderId:
       )
     }
 
-    // Generate new invoice every time to ensure fresh data
-    console.log("📄 Generating fresh invoice PDF")
-    const { buffer } = await generateInvoicePDF(order)
-
-    // Set proper headers for PDF download
-    const headers = new Headers()
-    headers.set("Content-Type", "application/pdf")
-    headers.set("Content-Disposition", `attachment; filename="SPARSH-Invoice-${orderId.slice(0, 8)}.pdf"`)
-    headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
-    headers.set("Pragma", "no-cache")
-    headers.set("Expires", "0")
-    headers.set("Content-Length", buffer.length.toString())
-
-    // Upload to Supabase storage for future reference (optional)
-    try {
-      const fileName = `invoices/invoice-${orderId}-${Date.now()}.pdf`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("invoices")
-        .upload(fileName, buffer, {
-          contentType: "application/pdf",
-          cacheControl: "3600",
-          upsert: true,
-        })
-
-      if (!uploadError && uploadData) {
-        // Get public URL
-        const { data: urlData } = supabase.storage.from("invoices").getPublicUrl(fileName)
-
-        if (urlData?.publicUrl) {
-          // Update order with invoice URL
-          await supabase.from("orders").update({ invoice_url: urlData.publicUrl }).eq("id", orderId)
-          console.log("✅ Invoice uploaded and order updated with URL:", urlData.publicUrl)
+    // Check if invoice already exists
+    if (order.invoice_url) {
+      console.log("📄 Invoice already exists, fetching from storage")
+      try {
+        const response = await fetch(order.invoice_url)
+        if (response.ok) {
+          const buffer = await response.arrayBuffer()
+          return new NextResponse(buffer, {
+            headers: {
+              "Content-Type": "application/pdf",
+              "Content-Disposition": `attachment; filename="SPARSH-Invoice-${orderId.slice(0, 8)}.pdf"`,
+              "Cache-Control": "public, max-age=3600",
+            },
+          })
         }
+      } catch (error) {
+        console.warn("⚠️ Failed to fetch existing invoice, generating new one")
       }
-    } catch (uploadError) {
-      console.warn("⚠️ Failed to upload invoice to storage, but continuing with download:", uploadError)
     }
 
-    return new NextResponse(buffer, { headers })
+    // Generate new invoice
+    console.log("📄 Generating new invoice PDF")
+    const pdfBuffer = await generateInvoicePDF(order)
+
+    // Upload to Supabase storage
+    const fileName = `invoices/invoice-${orderId}-${Date.now()}.pdf`
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("invoices")
+      .upload(fileName, pdfBuffer, {
+        contentType: "application/pdf",
+        cacheControl: "3600",
+      })
+
+    if (uploadError) {
+      console.error("❌ Failed to upload invoice:", uploadError)
+    } else {
+      // Get public URL
+      const { data: urlData } = supabase.storage.from("invoices").getPublicUrl(fileName)
+
+      if (urlData?.publicUrl) {
+        // Update order with invoice URL
+        await supabase.from("orders").update({ invoice_url: urlData.publicUrl }).eq("id", orderId)
+
+        console.log("✅ Invoice uploaded and order updated")
+      }
+    }
+
+    return new NextResponse(pdfBuffer, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="SPARSH-Invoice-${orderId.slice(0, 8)}.pdf"`,
+        "Cache-Control": "public, max-age=3600",
+      },
+    })
   } catch (error: any) {
     console.error("❌ Invoice generation error:", error)
     return NextResponse.json(

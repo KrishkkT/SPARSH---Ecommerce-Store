@@ -259,90 +259,27 @@ export default function OrdersPage() {
     }
   }
 
-  // Find the downloadInvoice function and update it to handle errors better
   const downloadInvoice = async (orderId: string) => {
     try {
       setDownloadingInvoice(orderId)
-
-      // Create a more robust download approach
-      const response = await fetch(`/api/orders/${orderId}/invoice`, {
-        method: "GET",
-        headers: {
-          Accept: "application/pdf",
-        },
-      })
+      const response = await fetch(`/api/orders/${orderId}/invoice`)
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error("❌ Invoice download failed:", errorData)
-        throw new Error(errorData.error || `Failed to generate invoice (${response.status})`)
+        throw new Error("Failed to generate invoice, Please Contact SPARSH at rs.sparshnaturals@gmail.com to receive Invoice.")
       }
 
-      // Get the blob and create download
       const blob = await response.blob()
-
-      // Verify it's actually a PDF
-      if (blob.type !== "application/pdf" && !blob.type.includes("pdf")) {
-        throw new Error("Invalid file type received")
-      }
-
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.style.display = "none"
       a.href = url
       a.download = `SPARSH-Invoice-${orderId.slice(0, 8)}.pdf`
-      a.target = "_blank" // Open in new tab as fallback
-
       document.body.appendChild(a)
       a.click()
-
-      // Cleanup
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      }, 100)
-
-      // Show success message
-      setError("")
-
-      // Refresh order data to get updated invoice URL
-      await fetchOrders()
-    } catch (error: any) {
-      console.error("❌ Invoice download error:", error)
-      setError(
-        `Failed to download invoice: ${error.message}. Please contact SPARSH at rs.sparshnaturals@gmail.com to receive your invoice.`,
-      )
-    } finally {
-      setDownloadingInvoice(null)
-    }
-  }
-
-  // Add this function to generate invoice if it doesn't exist
-  const generateInvoice = async (orderId: string) => {
-    try {
-      setDownloadingInvoice(orderId)
-
-      // First try to generate the invoice
-      const generateResponse = await fetch(`/api/orders/${orderId}/generate-invoice`, {
-        method: "POST",
-      })
-
-      if (!generateResponse.ok) {
-        const errorData = await generateResponse.json().catch(() => ({}))
-        throw new Error(errorData.error || `Failed to generate invoice (${generateResponse.status})`)
-      }
-
-      const generateData = await generateResponse.json()
-
-      if (generateData.success) {
-        // Now download the invoice
-        await downloadInvoice(orderId)
-      } else {
-        throw new Error(generateData.error || "Failed to generate invoice")
-      }
-    } catch (error: any) {
-      console.error("❌ Invoice generation error:", error)
-      setError(`Failed to generate invoice: ${error.message}`)
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      setError("Failed to download invoice, Please Contact SPARSH at rs.sparshnaturals@gmail.com to receive Invoice.")
     } finally {
       setDownloadingInvoice(null)
     }
