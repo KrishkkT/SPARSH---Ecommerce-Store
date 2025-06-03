@@ -692,7 +692,7 @@ export default function HomePage() {
                             src={product.image || "/placeholder.svg"}
                             alt={product.name}
                             className="w-full h-72 object-contain"
-                            whileHover={{ scale: 0.95 }}
+                            whileHover={{ scale: 0.85 }}
                             transition={{ duration: 0.6 }}
                           />
 
@@ -992,7 +992,7 @@ export default function HomePage() {
           )}
         </AnimatePresence>
 
-        {/* Enhanced Checkout Modal */}
+        {/* Enhanced Checkout Modal - Centered and Positioned Higher */}
         <AnimatePresence>
           {isCheckoutOpen && (
             <>
@@ -1004,14 +1004,14 @@ export default function HomePage() {
                 onClick={() => setIsCheckoutOpen(false)}
               />
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.9, y: 50 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                exit={{ opacity: 0, scale: 0.9, y: 50 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 overflow-y-auto"
               >
-                <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-white/20">
-                  <div className="p-6 border-b bg-gradient-to-r from-emerald-50 to-green-50">
+                <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-md border border-white/20 my-8">
+                  <div className="p-6 border-b bg-gradient-to-r from-emerald-50 to-green-50 rounded-t-3xl">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-bold text-emerald-800">Secure Checkout</h2>
                       <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>

@@ -1,7 +1,7 @@
 {
-  "name": "SPARSH by R Naturals",
+  "name": "SPARSH Natural Hair Care",
   "short_name": "SPARSH",
-  "description": "Premium Natural Hair Care Products",
+  "description": "Premium natural hair care products for healthy, beautiful hair",
   "icons": [
     {
       "src": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/android-chrome-192x192-KgLlOhdUTlTNmxPDBArWIQknLoU17p.png",
@@ -14,8 +14,9 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#10b981",
-  "background_color": "#ecfdf5",
+  "theme_color": "#059669",
+  "background_color": "#ffffff",
   "display": "standalone",
-  "start_url": "/"
+  "start_url": "/",
+  "scope": "/"
 }

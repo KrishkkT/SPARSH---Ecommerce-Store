@@ -30,6 +30,43 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: [
+      {
+        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-jW3jsQ6DCkRRuThFj5k8LyDygbf2N7.ico",
+        sizes: "any",
+      },
+      {
+        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-16x16-ij0A11RbfwhHAtfcEm8Tp1RQhMKn2z.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-32x32-w7U3gS4hZNA0oXfI8sQK0IoD5bGjcN.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/apple-touch-icon-LTIf73xzICmdEwRPUCZyKKxvGg1Mjs.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+    other: [
+      {
+        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/android-chrome-192x192-KgLlOhdUTlTNmxPDBArWIQknLoU17p.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/android-chrome-512x512-1wYajZyVGFy8xTbadm86nCMpgabRkq.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+  },
   openGraph: {
     title: "SPARSH - Natural Hair Care Products",
     description: "Transform your hair naturally with premium organic hair care products",
@@ -77,9 +114,27 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link
+          rel="icon"
+          href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-jW3jsQ6DCkRRuThFj5k8LyDygbf2N7.ico"
+          sizes="any"
+        />
+        <link
+          rel="icon"
+          href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-16x16-ij0A11RbfwhHAtfcEm8Tp1RQhMKn2z.png"
+          sizes="16x16"
+          type="image/png"
+        />
+        <link
+          rel="icon"
+          href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-32x32-w7U3gS4hZNA0oXfI8sQK0IoD5bGjcN.png"
+          sizes="32x32"
+          type="image/png"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/apple-touch-icon-LTIf73xzICmdEwRPUCZyKKxvGg1Mjs.png"
+        />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#059669" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
