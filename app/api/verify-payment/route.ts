@@ -1,51 +1,45 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyRazorpayPayment } from "@/lib/razorpay"
+import crypto from "crypto"
 import { getSupabaseClient } from "@/lib/supabase-client"
-import { EmailService } from "@/components/email-service"
-import { generateInvoicePDF } from "@/lib/invoice-generator"
+import { EnhancedEmailService } from "@/components/enhanced-email-service"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = body
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !order_id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Missing required fields",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Verify payment signature
-    const isValid = verifyRazorpayPayment({
-      orderId: razorpay_order_id,
-      paymentId: razorpay_payment_id,
-      signature: razorpay_signature,
+    console.log("🔐 Verifying payment:", {
+      razorpay_order_id,
+      razorpay_payment_id,
+      order_id,
     })
 
-    if (!isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid payment signature",
-        },
-        { status: 400 },
-      )
+    // Verify signature
+    const secret = process.env.RAZORPAY_KEY_SECRET
+    if (!secret) {
+      throw new Error("Razorpay secret key not configured")
     }
 
-    // Update order in database
+    const body_string = razorpay_order_id + "|" + razorpay_payment_id
+    const expected_signature = crypto.createHmac("sha256", secret).update(body_string).digest("hex")
+
+    if (expected_signature !== razorpay_signature) {
+      console.error("❌ Payment signature verification failed")
+      return NextResponse.json({ success: false, error: "Payment verification failed" }, { status: 400 })
+    }
+
+    console.log("✅ Payment signature verified")
+
     const supabase = getSupabaseClient()
 
-    const { data: order, error: orderError } = await supabase
+    // Update order status
+    const { data: order, error: updateError } = await supabase
       .from("orders")
       .update({
-        status: "confirmed",
         payment_status: "completed",
-        razorpay_payment_id,
-        razorpay_signature,
+        status: "confirmed",
+        payment_id: razorpay_payment_id,
+        razorpay_payment_id: razorpay_payment_id,
         updated_at: new Date().toISOString(),
       })
       .eq("id", order_id)
@@ -55,93 +49,72 @@ export async function POST(request: NextRequest) {
       `)
       .single()
 
-    if (orderError) {
-      console.error("Order update error:", orderError)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Failed to update order in database",
-        },
-        { status: 500 },
-      )
+    if (updateError || !order) {
+      console.error("❌ Failed to update order:", updateError)
+      throw new Error("Failed to update order status")
     }
 
-    // Generate invoice PDF
+    console.log("✅ Order updated successfully")
+
+    // Generate invoice after successful payment
     try {
-      const pdfBuffer = await generateInvoicePDF(order)
+      const invoiceResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/orders/${order_id}/invoice`, {
+        method: "GET",
+      })
 
-      // Upload to Supabase storage
-      const fileName = `invoices/invoice-${order.id}-${Date.now()}.pdf`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("invoices")
-        .upload(fileName, pdfBuffer, {
-          contentType: "application/pdf",
-          cacheControl: "3600",
-        })
-
-      if (uploadError) {
-        console.error("Invoice upload error:", uploadError)
+      if (invoiceResponse.ok) {
+        console.log("✅ Invoice generated successfully")
       } else {
-        // Get public URL
-        const { data: urlData } = supabase.storage.from("invoices").getPublicUrl(fileName)
-
-        if (urlData?.publicUrl) {
-          // Update order with invoice URL
-          await supabase.from("orders").update({ invoice_url: urlData.publicUrl }).eq("id", order.id)
-
-          // Add invoice URL to order object for email
-          order.invoice_url = urlData.publicUrl
-        }
+        console.warn("⚠️ Invoice generation failed, will be available later")
       }
     } catch (invoiceError) {
-      console.error("Invoice generation error:", invoiceError)
-      // Don't fail the payment verification if invoice generation fails
+      console.warn("⚠️ Invoice generation error:", invoiceError)
     }
 
-    // Send order confirmation email
+    // Send enhanced order confirmation email
     try {
-      await EmailService.sendOrderConfirmation({
+      const orderDetails = {
         order_id: order.id,
-        order_date: order.created_at,
         customer_name: order.customer_name,
         customer_email: order.customer_email,
         customer_phone: order.customer_phone,
         shipping_address: order.shipping_address,
-        payment_method: order.payment_method,
-        payment_id: razorpay_payment_id,
         total_amount: order.total_amount,
-        order_items: order.order_items,
+        payment_method: order.payment_method || "Razorpay",
+        payment_id: razorpay_payment_id,
+        order_date: order.created_at,
         invoice_url: order.invoice_url,
-      })
+        order_items: order.order_items?.map((item: any) => ({
+          product_name: item.product_name,
+          quantity: item.quantity,
+          product_price: item.product_price,
+          subtotal: item.product_price * item.quantity,
+        })),
+      }
 
-      // Send admin notification
-      await EmailService.sendAdminOrderNotification({
-        order_id: order.id,
-        customer_name: order.customer_name,
-        customer_email: order.customer_email,
-        customer_phone: order.customer_phone,
-        shipping_address: order.shipping_address,
-        payment_method: order.payment_method,
-        payment_id: razorpay_payment_id,
-        total_amount: order.total_amount,
-        order_items: order.order_items,
-        order_date: order.created_at,
-      })
+      const emailResult = await EnhancedEmailService.sendOrderConfirmation(orderDetails)
+
+      if (emailResult.success) {
+        console.log("✅ Order confirmation email sent successfully")
+      } else {
+        console.error("❌ Failed to send order confirmation email:", emailResult.customerEmail?.error)
+      }
     } catch (emailError) {
-      console.error("Order confirmation email error:", emailError)
-      // Don't fail the payment verification if email fails
+      console.error("❌ Email sending error:", emailError)
     }
 
     return NextResponse.json({
       success: true,
-      order,
+      message: "Payment verified and order confirmed",
+      order_id: order.id,
     })
   } catch (error: any) {
-    console.error("Verify payment error:", error)
+    console.error("❌ Payment verification error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to verify payment",
+        error: "Payment verification failed",
+        details: error.message,
       },
       { status: 500 },
     )

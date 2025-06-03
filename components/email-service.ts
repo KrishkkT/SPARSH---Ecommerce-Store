@@ -52,12 +52,19 @@ export class EmailService {
     const invoiceSection = orderDetails.invoice_url
       ? `
         <div style="margin: 20px 0; text-align: center;">
-          <a href="${orderDetails.invoice_url}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          <a href="${orderDetails.invoice_url}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
             Download Invoice
           </a>
         </div>
+        <p style="text-align: center; color: #666; font-size: 12px;">
+          You can also download your invoice from your order history page.
+        </p>
       `
-      : ""
+      : `
+        <div style="margin: 20px 0; text-align: center;">
+          <p>Your invoice will be available in your order history once processed.</p>
+        </div>
+      `
 
     const html = `
       <!DOCTYPE html>
