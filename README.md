@@ -31,6 +31,3 @@ Sparsh Naturals is a fully functional e-commerce platform focused on selling org
 - 📦 Order statuses (pending, paid, shipped)  
 
 ---
-
-
-✅ Built with ❤️ by [KT](https://kjt.vercel.app) | © 2025
